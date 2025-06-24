@@ -1,0 +1,57 @@
+.landing-text {
+  flex: 1;
+  min-width: 300px;
+  /* Remove the width constraint */
+  max-width: none;
+  width: 100%;
+  margin: 4rem 0;
+}
+
+.landing-text h1 {
+  font-size: 2.5rem;
+  color: #2d0057;
+}
+
+.landing-text p {
+  font-size: 1.2rem;
+  color: #333;
+  margin-top: 1rem;
+  line-height: 1.6;
+}
+
+.landing-image {
+  flex: 1;
+  max-width: 500px;
+  margin: 1rem;
+}
+
+.landing-image img {
+  width: 100%;
+  border-radius: 12px;
+}
+
+/* ======= Updated Info Section ======= */
+
+.info-section {
+  padding: 4rem 5%;
+  background-color: #ffffff;
+  color: #333;
+  /* Removed width restriction */
+  width: 100%;
+}
+
+.info-section h2 {
+  text-align: center;
+  font-size: 2.5rem;
+  color: #2d0057;
+  margin-bottom: 2rem;
+  margin-top: 3rem; /* <-- Add this */
+}
+
+
+.info-section p {
+  font-size: 1.2rem;
+  line-height: 1.8;
+  max-width: 100%;
+  margin: 0 auto;
+}
