@@ -108,14 +108,12 @@ const SearchResultsPage = () => {
               <div key={index} className="result-item">
                 <div className="result-header">
                   <h3 className="paper-title">
-                    <a 
-                      href={paper.url} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
+                    <Link
+                      to={`/teachers/${encodeURIComponent(paper.teacherName)}/publications/${encodeURIComponent(paper.title)}`}
                       className="title-link"
                     >
                       {paper.title}
-                    </a>
+                    </Link>
                   </h3>
                   {paper.pdfLink && (
                     <a 

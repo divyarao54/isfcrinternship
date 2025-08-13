@@ -9,15 +9,30 @@ const connectDB = async () => {
       return;
     }
 
-    const conn = await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/research_papers', {
-      serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
+    // Use MongoDB Atlas connection string from environment variable
+    // If not provided, use a placeholder that will need to be updated
+    const mongoUri = process.env.MONGODB_URI || 'mongodb+srv://<username>:<password>@<cluster-url>/<database-name>?retryWrites=true&w=majority';
+    
+    if (mongoUri.includes('<username>') || mongoUri.includes('<cluster-url>')) {
+      console.error('⚠️  MONGODB_URI not properly configured!');
+      console.error('Please set your MongoDB Atlas connection string in the environment variable MONGODB_URI');
+      console.error('Example: mongodb+srv://username:password@cluster0.xxxxx.mongodb.net/research_papers?retryWrites=true&w=majority');
+      throw new Error('MongoDB Atlas connection string not configured');
+    }
+
+    const conn = await mongoose.connect(mongoUri, {
+      serverSelectionTimeoutMS: 10000, // Increased timeout for Atlas
       socketTimeoutMS: 45000, // Close sockets after 45s of inactivity
+      connectTimeoutMS: 10000, // Connection timeout
+      maxPoolSize: 10, // Maximum number of connections in the pool
+      minPoolSize: 1, // Minimum number of connections in the pool
+      maxIdleTimeMS: 30000, // Close connections after 30s of inactivity
       family: 4 // Use IPv4, skip trying IPv6
     });
     
-    console.log(`MongoDB Connected: ${conn.connection.host}`);
+    console.log(`✅ MongoDB Atlas Connected: ${conn.connection.host}`);
   } catch (error) {
-    console.error('MongoDB connection error:', error);
+    console.error('❌ MongoDB connection error:', error);
     // Don't exit the process, let the application handle the error
     throw error;
   }

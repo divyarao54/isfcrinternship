@@ -118,6 +118,85 @@
     color: white;
 }
 
+.summarize-btn, .back-btn, .retry-btn {
+  background-color: #182745 !important;
+  color: #fff !important;
+  border: none;
+  transition: background 0.18s, color 0.18s;
+}
+.summarize-btn:hover:not(:disabled), .back-btn:hover:not(:disabled), .retry-btn:hover:not(:disabled) {
+  background-color: #ec8739 !important;
+  color: #fff !important;
+}
+
+.summarize-btn:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
+.summary-content {
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 20px;
+    margin-top: 10px;
+}
+
+.summary-content pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-family: inherit;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: #333;
+    margin: 0;
+}
+
+.error-message {
+    color: #d32f2f;
+    background-color: #ffebee;
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px solid #ffcdd2;
+    margin: 0;
+}
+
+.upload-option {
+    margin-top: 15px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+}
+
+.upload-option p {
+    margin: 0 0 10px 0;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.file-input {
+    display: block;
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.file-input:disabled {
+    background-color: #f5f5f5;
+    cursor: not-allowed;
+}
+
+.uploading-text {
+    margin-top: 10px;
+    color: #1976d2;
+    font-style: italic;
+    font-size: 0.9rem;
+}
+
 .loading {
     text-align: left;
     font-size: 1.2rem;

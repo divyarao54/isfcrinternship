@@ -32,7 +32,7 @@ async function searchPapers(keyword) {
         fuzziness: 'AUTO',
       },
     },
-    size: 20, // Increase or decrease depending on your needs
+    size: 50, // Increased size to get more results before deduplication
   });
 
   const keywordLower = keyword.toLowerCase();
@@ -48,13 +48,30 @@ async function searchPapers(keyword) {
     );
   });
 
-  if (filtered.length === 0) {
+  // Deduplicate results by composite key: title+year+authors (case-insensitive, trimmed)
+  const seenKeys = new Set();
+  const uniqueResults = [];
+
+  for (const hit of filtered) {
+    const paper = hit._source;
+    const title = (paper.title || '').trim().toLowerCase();
+    const year = (paper.year || '').toString().trim();
+    const authors = (paper.authors || '').trim().toLowerCase();
+    const key = `${title}|${year}|${authors}`;
+    if (seenKeys.has(key)) {
+      continue;
+    }
+    seenKeys.add(key);
+    uniqueResults.push(hit);
+  }
+
+  if (uniqueResults.length === 0) {
     console.log(`❌ No papers found containing "${keyword}"`);
     return;
   }
 
-  console.log(`🔍 Search results for "${keyword}":\n`);
-  filtered.forEach((hit, i) => {
+  console.log(`🔍 Search results for "${keyword}" (${uniqueResults.length} unique papers):\n`);
+  uniqueResults.forEach((hit, i) => {
     const paper = hit._source;
     console.log(`${i + 1}. ${paper.title}`);
     console.log(`   ➤ Authors: ${paper.authors}`);

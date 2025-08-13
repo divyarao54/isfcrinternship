@@ -5,7 +5,8 @@ const teacherSchema = new mongoose.Schema({
   name: {
     type: String,
     required: true,
-    trim: true
+    trim: true,
+    unique: true // Ensure teacher name is unique
   },
   profileUrl: {
     type: String,
@@ -20,13 +21,18 @@ const teacherSchema = new mongoose.Schema({
   lastUpdated: {
     type: Date,
     default: Date.now
+  },
+  citationsPerYear: {
+    type: Map,
+    of: Number,
+    default: {}
   }
 }, {
   timestamps: true
 });
 
-// Create index on profileUrl for faster lookups
-teacherSchema.index({ profileUrl: 1 });
+// Indexes are already defined in the schema fields above with unique: true
+// No need for duplicate schema.index() calls
 
 const Teacher = mongoose.model('Teacher', teacherSchema);
 

@@ -9,6 +9,53 @@ const TeacherPage = () => {
     const [error, setError] = useState("");
     const navigate = useNavigate();
 
+    // Define the specific order for teachers
+    const teacherOrder = [
+        "Prasad Honnavalli",
+        "Gowri Srinivasa", 
+        "Preet Kanwal PESU CSE",
+        "Nagasundari S, Ph.D",
+        "Adithya Balasubramanyam",
+        "Dr. Roopa Ravish",
+        "Ashok Kumar Patil",
+        "Radhika M. Hirannaiah",
+        "Sushma Ethadi",
+        "Charanraj B R",
+        "Revathi G P",
+        "Vadiraja Acharya",
+        "Shruti Jadon",
+        "Dr. Sapna V M",
+        "Indu Radhakrishnan",
+        "Shruti B P"
+    ];
+
+    // Function to sort teachers according to the specified order
+    const sortTeachers = (teachersList) => {
+        const sortedTeachers = [];
+        const remainingTeachers = [];
+
+        // First, add teachers in the specified order
+        teacherOrder.forEach(teacherName => {
+            const teacher = teachersList.find(t => t.name === teacherName);
+            if (teacher) {
+                sortedTeachers.push(teacher);
+            }
+        });
+
+        // Then add all remaining teachers in alphabetical order
+        teachersList.forEach(teacher => {
+            if (!teacherOrder.includes(teacher.name)) {
+                remainingTeachers.push(teacher);
+            }
+        });
+
+        // Sort remaining teachers alphabetically
+        remainingTeachers.sort((a, b) => a.name.localeCompare(b.name));
+
+        // Combine the sorted lists
+        return [...sortedTeachers, ...remainingTeachers];
+    };
+
     useEffect(() => {
         fetchTeachers();
     }, []);
@@ -17,7 +64,9 @@ const TeacherPage = () => {
         try {
             setLoading(true);
             const response = await axios.get("http://localhost:5000/teachers");
-            setTeachers(response.data.teachers || []);
+            const sortedTeachers = sortTeachers(response.data.teachers || []);
+            console.log("Teachers in order:", sortedTeachers.map(t => t.name)); // Temporary debug log
+            setTeachers(sortedTeachers);
             setError("");
         } catch (error) {
             console.error("Error fetching teachers:", error);
@@ -96,7 +145,7 @@ const TeacherPage = () => {
                                     className="profile-link"
                                     onClick={(e) => e.stopPropagation()}
                                 >
-                                    View Google Scholar Profile
+                                    Google Scholar Profile
                                 </a>
                             </div>
                         </div>

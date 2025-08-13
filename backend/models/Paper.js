@@ -7,8 +7,8 @@ const paperSchema = new mongoose.Schema({
   },
   url: {
     type: String,
-    required: true,
-    unique: true
+    required: false
+    // unique: true // Remove unique constraint so multiple publications can have the same url
   },
   teacherName: {
     type: String,
@@ -34,10 +34,23 @@ const paperSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
-  publicationDate: String
+  publicationDate: String,
+  inventors: String,
+  patentOffice: String,
+  patentNumber: String,
+  applicationNumber: String,
+  patentFilingNumber: String,
+  filedOn: String,
+  grantedOn: String,
+  patent: {
+    type: Boolean,
+    default: false
+  }
 }, {
-  timestamps: true,
-  collection: 'papers'
+  timestamps: true
 });
+
+// Remove or comment out the unique index on url
+// paperSchema.index({ url: 1 }, { unique: true });
 
 module.exports = mongoose.model('Paper', paperSchema); 

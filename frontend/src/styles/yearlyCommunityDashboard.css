@@ -1,0 +1,288 @@
+.yearly-dashboard-container {
+    padding: 24px 3vw;
+    background-color: #f4f6f8;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.dashboard-main-title {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: #182745;
+    text-align: center;
+    margin-bottom: 28px;
+}
+
+.summary-cards {
+    display: flex;
+    justify-content: center;
+    gap: 32px;
+    margin-bottom: 40px;
+    flex-wrap: wrap;
+}
+
+.summary-card {
+    background-color: #ffffff;
+    /*padding: 24px 32px;*/
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    text-align: center;
+    min-width: 220px;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.summary-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+.card-value {
+    font-size: 2.5rem;
+    font-weight: 600;
+    color: #182745;
+    margin-bottom: 4px;
+}
+
+.card-label {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #555;
+}
+
+.chart-container {
+    background-color: #ffffff;
+    padding: 28px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    margin-bottom: 32px;
+}
+
+.chart-title {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 16px;
+    text-align: center;
+}
+
+.back-button {
+    background-color: #e0e0e0;
+    color: #333;
+    border: none;
+    width: fit-content;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: 20px;
+    transition: background-color 0.2s;
+}
+
+.back-button:hover {
+    background-color: #d1d1d1;
+}
+
+.dashboard-item{
+    width: 50%;
+}
+
+.dashboard-charts-row {
+    
+    justify-content: center;
+    align-items: stretch;
+    margin-bottom: 32px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.dashboard-chart-half {
+    width: 100%;
+    min-width: 0;
+    max-width: 50%;
+}
+
+.dashboard-charts-row .chart-container {
+    margin-bottom: 0;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+}
+
+.donut-chart-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 32px;
+    margin-bottom: 32px;
+    /*background: #fafbfc;*/
+    background-color: #ffffff;
+    border-radius: 12px;
+    /*box-shadow: 0 2px 8px rgba(0,0,0,0.04);*/
+    padding: 24px 0;
+    height: 1000px;
+    width: 1000px;
+}
+
+.donut-chart-section {
+  width: 1425px;
+  /*max-width: 100%;*/
+  /*left: 0px;*/
+  margin-left: 107%;
+  transform: translateX(-50%);
+  /*background: #f5f7fa;*/
+  background-color: #ffffff;
+  padding: 48px 0 32px 0;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.drilldown-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.35);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeInOverlay 0.2s;
+}
+
+@keyframes fadeInOverlay {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.drilldown-publication-section {
+  background: #fff; /* Remove yellow background */
+  border: none; /* Remove yellow border */
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18), 0 1.5px 6px rgba(0,0,0,0.07);
+  border-radius: 18px;
+  padding: 36px 36px 28px 36px;
+  min-width: 700px; /* Increased from 340px */
+  max-width: 1200px; /* Increased for more space */
+  max-height: 90vh;
+  overflow-y: auto;
+  margin: 0;
+  transition: box-shadow 0.2s, border-color 0.2s;
+  position: relative;
+  z-index: 1100;
+  animation: popInDrilldown 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+
+.drilldown-publication-section li {
+  background: #fff;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 10px;
+  margin-bottom: 16px;
+  padding: 16px 18px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.drilldown-publication-section li:hover {
+  border-color: #bdbdbd;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.10);
+}
+
+.drilldown-publication-section h2 {
+  color: #1976d2;
+  font-size: 1.5rem;
+  margin-bottom: 18px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+@media (max-width: 900px) {
+  .drilldown-publication-section {
+    padding: 18px 6vw 18px 6vw;
+    min-width: 0;
+    max-width: 98vw;
+    border-radius: 10px;
+  }
+}
+
+@media (max-width: 900px) {
+    .yearly-dashboard-container {
+        padding-left: 2vw;
+        padding-right: 2vw;
+    }
+    .dashboard-charts-row {
+        grid-template-columns: 1fr;
+        gap: 18px;
+        align-items: center;
+        width: 100%;
+    }
+    .dashboard-chart-half {
+        min-width: 0;
+        max-width: 100%;
+    }
+    .donut-chart-section {
+        padding: 24px 0 16px 0;
+    }
+    
+    .domain-tiles-section {
+        width: 100%;
+        margin-left: 0;
+        transform: none;
+        padding: 24px 0 16px 0;
+    }
+}
+
+.domain-tiles-section {
+    width: 1425px;
+    margin-left: 107%;
+    transform: translateX(-50%);
+    background-color: #ffffff;
+    padding: 48px 0 32px 0;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 32px;
+    box-sizing: border-box;
+}
+
+/* Awards panel aligned like donut and domain sections */
+.yearly-dashboard-container .awards-section {
+    width: 1425px;
+    margin-left: 107%;
+    transform: translateX(-50%);
+    background-color: #ffffff;
+    padding: 24px 24px 16px 24px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+    border-radius: 12px;
+    margin-bottom: 24px;
+    box-sizing: border-box;
+}
+
+.yearly-dashboard-container .awards-grid {
+    display: flex;
+    flex-wrap: nowrap; /* single horizontal line */
+    gap: 16px;
+    overflow-x: auto; /* scroll if many */
+    padding-bottom: 8px;
+}
+
+.yearly-dashboard-container .award-card {
+    flex: 0 0 220px; /* fixed card width for horizontal row */
+}
+
+.yearly-dashboard-container .award-image {
+    height: 140px;
+}
+
+@media (max-width: 900px) {
+    .donut-chart-container {
+        padding: 8px 0;
+        width: 100%;
+    }
+    .donut-chart-section {
+        width: 100%;
+        margin-left: 50%;
+    }
+} 

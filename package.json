@@ -15,12 +15,14 @@
   },
   "dependencies": {
     "@elastic/elasticsearch": "^9.0.2",
+    "axios": "^1.10.0",
     "bull": "^4.12.2",
     "dotenv": "^16.3.1",
     "ioredis": "^5.3.2",
     "mongodb": "^6.17.0",
     "mongoose": "^8.0.3",
     "node-cron": "^3.0.3",
+    "plotly.js-dist-min": "^3.0.1",
     "puppeteer": "^21.7.0"
   }
 }
