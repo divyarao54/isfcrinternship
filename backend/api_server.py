@@ -755,9 +755,9 @@ def check_elasticsearch_status():
         import tempfile
         import os
         
-        # Get the absolute path to client.js
-        root_dir = os.path.dirname(os.path.dirname(__file__))
-        client_path = os.path.join(root_dir, 'client.js')
+        # Get the absolute path to client.js (now in backend directory)
+        backend_dir = os.path.dirname(__file__)
+        client_path = os.path.join(backend_dir, 'client.js')
         client_path_fixed = client_path.replace("\\", "/")
         
         # Create a simple Node.js script to check Elasticsearch
@@ -789,7 +789,7 @@ client.cat.indices({{format: 'json'}})
             # Run the script with output redirected to files
             process = subprocess.Popen(
                 ['node', temp_script],
-                cwd=root_dir,  # Run from root directory where client.js is located
+                cwd=backend_dir,  # Run from backend directory where client.js is located
                 stdout=open(stdout_path, 'w', encoding='utf-8'),
                 stderr=open(stderr_path, 'w', encoding='utf-8'),
                 env=dict(os.environ, PYTHONIOENCODING='utf-8', NODE_OPTIONS='--max-old-space-size=4096')
@@ -865,15 +865,17 @@ def search_papers():
         if not query:
             return jsonify({'error': 'No search query provided'}), 400
         
-        # Get the absolute path to searchPaper.js
-        root_dir = os.path.dirname(os.path.dirname(__file__))
-        search_script_path = os.path.join(root_dir, 'searchPaper.js')
-        client_js_path = os.path.join(root_dir, "client.js")
-        client_js_path_fixed = client_js_path.replace("\\", "/")
+        # Get the absolute path to searchPaper.js (now in backend directory)
+        backend_dir = os.path.dirname(__file__)
+        search_script_path = os.path.join(backend_dir, 'searchPaper.js')
         
-        # Create a modified search script that accepts query as argument
-        search_script = f'''
-const client = require('{client_js_path_fixed}');
+        # Set environment variable for the search script
+        env = os.environ.copy()
+        env['ELASTIC_NODE'] = 'http://localhost:9200'
+        
+        # Create a temporary script that accepts the query as an argument
+        temp_script = f'''
+const client = require('{os.path.join(backend_dir, 'client.js').replace("\\", "/")}');
 
 async function getTeacherIndices() {{
   try {{
@@ -905,7 +907,7 @@ async function searchPapers(keyword) {{
           fuzziness: 'AUTO',
         }},
       }},
-      size: 100, // Increased size to get more results before deduplication
+      size: 100,
     }});
 
     const keywordLower = keyword.toLowerCase();
@@ -954,7 +956,6 @@ async function searchPapers(keyword) {{
 
     // Limit to 50 results after deduplication
     const finalResults = uniqueResults.slice(0, 50);
-
     console.log(JSON.stringify(finalResults));
   }} catch (error) {{
     console.error('Search error:', error.message);
@@ -968,8 +969,8 @@ searchPapers(keyword);
         
         # Write the script to a temporary file
         with tempfile.NamedTemporaryFile(mode='w', suffix='.js', delete=False, encoding='utf-8') as f:
-            f.write(search_script)
-            temp_script = f.name
+            f.write(temp_script)
+            temp_script_path = f.name
         
         # Create temporary files for output
         with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False, encoding='utf-8') as stdout_file, \
@@ -981,11 +982,11 @@ searchPapers(keyword);
         try:
             # Run the search script with the query as argument
             process = subprocess.Popen(
-                ['node', temp_script, query],
-                cwd=root_dir,
+                ['node', temp_script_path, query],
+                cwd=backend_dir,
                 stdout=open(stdout_path, 'w', encoding='utf-8'),
                 stderr=open(stderr_path, 'w', encoding='utf-8'),
-                env=dict(os.environ, PYTHONIOENCODING='utf-8', NODE_OPTIONS='--max-old-space-size=4096')
+                env=env
             )
             
             try:
