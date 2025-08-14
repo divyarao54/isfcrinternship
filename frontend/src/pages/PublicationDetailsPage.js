@@ -313,18 +313,18 @@ const PublicationDetailsPage = () => {
                             >
                                 View PDF
                             </a>
-                            <button 
+                            {/*<button 
                                 onClick={handleSummarize}
                                 disabled={summarizing}
                                 className="summarize-btn"
                             >
                                 {summarizing ? "Summarizing..." : "Summarize Paper"}
-                            </button>
+                            </button>*/}
                         </div>
                     )}
 
                     {/* Always show file upload option */}
-                    <div className="info-section">
+                    {/*<div className="info-section">
                         <h3>Upload PDF for Summarization</h3>
                         <p>If the PDF link doesn't work or you have a local copy, you can upload it directly:</p>
                         <input
@@ -351,7 +351,7 @@ const PublicationDetailsPage = () => {
                                 <pre>{summary}</pre>
                             </div>
                         </div>
-                    )}
+                    )}*/}
                 </div>
             </div>
         </div>
