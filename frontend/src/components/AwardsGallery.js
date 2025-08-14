@@ -1,11 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 
-// Dynamically import all images from src/assets using webpack's require.context
+// Build an index of local assets so legacy awards (stored by filename) still render
 const useAssetsIndex = () => {
   const context = useMemo(() => {
     try {
-      // include common image formats
       return require.context('../assets', false, /\.(png|jpe?g|gif|svg|webp|avif)$/i);
     } catch (e) {
       return null;
@@ -16,7 +15,6 @@ const useAssetsIndex = () => {
     const map = new Map();
     if (!context) return map;
     context.keys().forEach((key) => {
-      // keys look like './filename.ext'
       const fileName = key.replace('./', '');
       try {
         const url = context(key);
@@ -51,23 +49,67 @@ const AwardsGallery = () => {
   if (loading) return null;
   if (error || awards.length === 0) return null;
 
-  // Only show awards whose image file actually exists in assets
-  const visibleAwards = awards.filter(a => a && a.imageFilename && assetsIndex.has(a.imageFilename));
+  // Resolve a display URL for both new (imageUrl) and legacy fields
+  const isHttpUrl = (s) => typeof s === 'string' && /^https?:\/\//i.test(s);
+  const isDataUrl = (s) => typeof s === 'string' && /^data:image\//i.test(s);
+  const getFileName = (p) => {
+    if (typeof p !== 'string') return null;
+    try {
+      // If it's a URL, take last pathname segment
+      if (isHttpUrl(p)) {
+        const u = new URL(p);
+        return u.pathname.split('/').filter(Boolean).pop() || null;
+      }
+    } catch {}
+    // Otherwise treat as path and return last segment
+    const parts = p.split('/');
+    return parts[parts.length - 1] || null;
+  };
+
+  const visibleAwards = awards
+    .map((a) => {
+      if (!a) return null;
+
+      // 1) Prefer explicit URLs (supports http(s) and data URLs)
+      const directUrlCandidates = [a.imageUrl, a.imageLink, a.url, a.relativePath, a.imageFilename];
+      for (const cand of directUrlCandidates) {
+        if (isHttpUrl(cand) || isDataUrl(cand)) {
+          return { ...a, _displayUrl: cand };
+        }
+      }
+
+      // 2) Try to resolve by filename against bundled assets
+      const fileNameCandidates = [a.imageFilename, getFileName(a.relativePath)];
+      for (const fname of fileNameCandidates) {
+        if (fname && assetsIndex.has(fname)) {
+          return { ...a, _displayUrl: assetsIndex.get(fname) };
+        }
+      }
+
+      return null;
+    })
+    .filter(Boolean);
   if (visibleAwards.length === 0) return null;
 
   return (
     <section className="awards-section">
       <h2 className="awards-title">ISFCR Awards</h2>
       <div className="awards-grid">
-        {visibleAwards.map((a, idx) => {
-          const imgUrl = assetsIndex.get(a.imageFilename);
-          return (
-            <div className="award-card" key={a._id || idx}>
-              <img className="award-image" src={imgUrl} alt={a.awardName || a.imageFilename} />
-              <div className="award-name">{a.awardName || a.imageFilename}</div>
-            </div>
-          );
-        })}
+        {visibleAwards.map((a, idx) => (
+          <div className="award-card" key={a._id || idx}>
+            <img 
+              className="award-image" 
+              src={a._displayUrl} 
+              alt={a.awardName || a.imageFilename || 'Award'} 
+              onError={(e) => {
+                // Hide broken image and show fallback text
+                e.target.style.display = 'none';
+                e.target.nextSibling.textContent = 'Image not available';
+              }}
+            />
+            <div className="award-name">{a.awardName || a.imageFilename || 'Award'}</div>
+          </div>
+        ))}
       </div>
     </section>
   );

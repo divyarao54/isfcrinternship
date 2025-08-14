@@ -46,56 +46,53 @@ def slugify_filename(name: str) -> str:
     return s or 'award'
 
 @app.route('/api/awards', methods=['POST'])
-def upload_award():
-    """Upload an ISFCR award image and metadata; saves image under frontend/src/assets and stores record."""
+def add_award():
+    """Add an ISFCR award with image URL; stores record in MongoDB awards collection."""
     try:
-        print('[AWARDS] Handling upload_award')
+        print('[AWARDS] Handling add_award')
+        
+        # Get JSON data instead of form data
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'JSON data is required'}), 400
+            
         # Validate fields
-        award_name = request.form.get('awardName', '').strip()
+        award_name = data.get('awardName', '').strip()
+        image_url = data.get('imageUrl', '').strip()
         print(f'[AWARDS] awardName={award_name!r}')
-        image = request.files.get('image')
-        print(f'[AWARDS] image present? {bool(image)} filename={getattr(image, "filename", None)}')
+        print(f'[AWARDS] imageUrl={image_url!r}')
+        
         if not award_name:
             return jsonify({'error': 'Award name is required'}), 400
-        if image is None or image.filename == '':
-            return jsonify({'error': 'Award image is required'}), 400
-
-        # Prepare path and filename
-        assets_dir = get_frontend_assets_dir()
-        print(f'[AWARDS] assets_dir={assets_dir}')
-        original = secure_filename(image.filename)
-        _, ext = os.path.splitext(original)
-        # Default to .png if no extension provided
-        ext = (ext or '.png')
-        base = slugify_filename(award_name)
-        filename = f"{base}{ext.lower()}"
-        # Avoid overwriting: add -1, -2, ... suffix if needed
-        counter = 1
-        while os.path.exists(os.path.join(assets_dir, filename)):
-            filename = f"{base}-{counter}{ext.lower()}"
-            counter += 1
-        save_path = os.path.join(assets_dir, filename)
-        print(f'[AWARDS] saving to {save_path}')
-        image.save(save_path)
+        if not image_url:
+            return jsonify({'error': 'Image URL is required'}), 400
+            
+        # Basic URL validation
+        try:
+            from urllib.parse import urlparse
+            parsed_url = urlparse(image_url)
+            if not parsed_url.scheme or not parsed_url.netloc:
+                return jsonify({'error': 'Invalid image URL format'}), 400
+        except Exception:
+            return jsonify({'error': 'Invalid image URL format'}), 400
 
         # Store metadata in DB
         db = db_manager.connect()
         awards_collection = db['awards']
         doc = {
             'awardName': award_name,
-            'imageFilename': filename,
-            'relativePath': f"frontend/src/assets/{filename}",
+            'imageUrl': image_url,
             'createdAt': datetime.utcnow().isoformat()
         }
         result = awards_collection.insert_one(doc)
 
-        print(f'[AWARDS] saved and inserted id={str(result.inserted_id)}')
+        print(f'[AWARDS] inserted id={str(result.inserted_id)}')
         # Build a JSON-safe award payload (avoid ObjectId in doc after insert_one)
         safe_award = {k: v for k, v in doc.items() if k != '_id'}
         safe_award['_id'] = str(result.inserted_id)
         return jsonify({
             'success': True,
-            'message': 'Award uploaded successfully',
+            'message': 'Award added successfully',
             'award': safe_award
         }), 201
     except Exception as e:

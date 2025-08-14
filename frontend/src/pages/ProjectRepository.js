@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import './ProjectRepository.css';
+import '../styles/ProjectRepository.css';
 import ProjectDeleteModal from '../components/ProjectDeleteModal';
 import AwardModal from '../components/AwardModal';
 
@@ -132,21 +132,25 @@ const ProjectRepository = () => {
   const openAddAward = () => { setShowAddMenu(false); setShowAwardModal(true); };
   const closeAwardModal = () => setShowAwardModal(false);
 
-  const handleAddAward = async (awardName, file) => {
+  const handleAddAward = async (awardName, imageUrl) => {
     try {
       setIsUploadingAward(true);
-      const formData = new FormData();
-      formData.append('awardName', awardName);
-      formData.append('image', file);
-      // Let axios set the proper multipart boundary automatically
-      const resp = await axios.post('http://localhost:5000/api/awards', formData);
+      const awardData = {
+        awardName: awardName,
+        imageUrl: imageUrl
+      };
+      const resp = await axios.post('http://localhost:5000/api/awards', awardData, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
       if (resp.data && resp.data.success) {
-        alert('Award uploaded successfully');
+        alert('Award added successfully');
         setShowAwardModal(false);
       }
     } catch (e) {
-      console.error('Failed to upload award', e);
-      alert('Failed to upload award');
+      console.error('Failed to add award', e);
+      alert('Failed to add award');
     } finally {
       setIsUploadingAward(false);
     }

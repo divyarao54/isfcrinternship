@@ -2,14 +2,9 @@ import React, { useState } from 'react';
 
 const AwardModal = ({ isOpen, onClose, onSubmit, isUploading }) => {
   const [awardName, setAwardName] = useState('');
-  const [imageFile, setImageFile] = useState(null);
+  const [imageUrl, setImageUrl] = useState('');
 
   if (!isOpen) return null;
-
-  const handleFileChange = (e) => {
-    const file = e.target.files && e.target.files[0];
-    setImageFile(file || null);
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -17,13 +12,22 @@ const AwardModal = ({ isOpen, onClose, onSubmit, isUploading }) => {
       alert('Please enter an award name');
       return;
     }
-    if (!imageFile) {
-      alert('Please select an award image');
+    if (!imageUrl.trim()) {
+      alert('Please enter an image URL');
       return;
     }
-    await onSubmit(awardName.trim(), imageFile);
+    
+    // Basic URL validation
+    try {
+      new URL(imageUrl.trim());
+    } catch {
+      alert('Please enter a valid image URL (e.g., https://example.com/image.jpg)');
+      return;
+    }
+    
+    await onSubmit(awardName.trim(), imageUrl.trim());
     setAwardName('');
-    setImageFile(null);
+    setImageUrl('');
   };
 
   return (
@@ -46,12 +50,14 @@ const AwardModal = ({ isOpen, onClose, onSubmit, isUploading }) => {
             />
           </div>
           <div className="form-group">
-            <label htmlFor="awardImage">Award Image *</label>
+            <label htmlFor="awardImage">Award Image URL *</label>
             <input
-              type="file"
+              type="url"
               id="awardImage"
-              accept="image/*"
-              onChange={handleFileChange}
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              placeholder="Enter image URL (e.g., https://example.com/image.jpg)"
+              required
             />
           </div>
           <div className="form-actions">

@@ -5,14 +5,16 @@ const subprocess = require('child_process');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
+require('dotenv').config();
 
 const redis = new Redis({ host: '127.0.0.1', port: 6379 });
 const LAST_JOB_KEY = 'scrape:lastJobStart';
-const INTERVAL_MS = 60 * 60 * 1000; // 1 hour
+const INTERVAL_MS = 30 * 24 * 60 * 60 * 1000; // 1 month (30 days)
 const CHECK_INTERVAL_MS = 60 * 1000; // Check every 1 minute
+const LOG_INTERVAL_MS = 5 * 60 * 1000; // Log every 5 minutes
 
-// MongoDB connection
-const MONGODB_URI = 'mongodb://127.0.0.1:27017/research_papers';
+// MongoDB connection - use environment variable
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/research_papers';
 const DB_NAME = 'research_papers';
 
 // Create a Bull queue for scraping jobs
@@ -95,6 +97,22 @@ async function runUpdateAll() {
         
         console.log(`[SCHEDULER] Process started for ${name} with PID: ${scraperProcess.pid}`);
         
+        // Collect output DURING process execution to avoid deadlocks
+        let stdout = '';
+        let stderr = '';
+        
+        scraperProcess.stdout.on('data', (data) => {
+          const dataStr = data.toString();
+          stdout += dataStr;
+          stdoutStream.write(data);
+        });
+        
+        scraperProcess.stderr.on('data', (data) => {
+          const dataStr = data.toString();
+          stderr += dataStr;
+          stderrStream.write(data);
+        });
+        
         // Wait for process to complete with timeout
         const returnCode = await new Promise((resolve) => {
           const timeout = setTimeout(() => {
@@ -116,27 +134,12 @@ async function runUpdateAll() {
           });
         });
         
-        // Collect output from pipes
-        let stdout = '';
-        let stderr = '';
+        // Close streams after process completes
+        stdoutStream.end();
+        stderrStream.end();
         
-        scraperProcess.stdout.on('data', (data) => {
-          stdout += data.toString();
-          stdoutStream.write(data);
-        });
-        
-        scraperProcess.stderr.on('data', (data) => {
-          stderr += data.toString();
-          stderrStream.write(data);
-        });
-        
-        // Wait for streams to finish
-        await new Promise((resolve) => {
-          stdoutStream.end(resolve);
-        });
-        await new Promise((resolve) => {
-          stderrStream.end(resolve);
-        });
+        // Wait a brief moment for streams to finish writing
+        await new Promise(resolve => setTimeout(resolve, 100));
         
         results.push({
           teacher: name,
@@ -185,6 +188,22 @@ async function runUpdateAll() {
         env: { ...process.env, PYTHONIOENCODING: 'utf-8', NODE_OPTIONS: '--max-old-space-size=4096' }
       });
       
+      // Collect output DURING sync process execution
+      let syncStdout = '';
+      let syncStderr = '';
+      
+      syncProcess.stdout.on('data', (data) => {
+        const dataStr = data.toString();
+        syncStdout += dataStr;
+        syncStdoutStream.write(data);
+      });
+      
+      syncProcess.stderr.on('data', (data) => {
+        const dataStr = data.toString();
+        syncStderr += dataStr;
+        syncStderrStream.write(data);
+      });
+      
       const syncReturnCode = await new Promise((resolve) => {
         const timeout = setTimeout(() => {
           syncProcess.kill();
@@ -197,27 +216,19 @@ async function runUpdateAll() {
         });
       });
       
-      // Collect output from pipes for sync process
-      let syncStdout = '';
-      let syncStderr = '';
+      // Close streams after sync process completes
+      syncStdoutStream.end();
+      syncStderrStream.end();
       
-      syncProcess.stdout.on('data', (data) => {
-        syncStdout += data.toString();
-        syncStdoutStream.write(data);
-      });
-      
-      syncProcess.stderr.on('data', (data) => {
-        syncStderr += data.toString();
-        syncStderrStream.write(data);
-      });
-      
-      await new Promise((resolve) => { syncStdoutStream.end(resolve); });
-      await new Promise((resolve) => { syncStderrStream.end(resolve); });
+      // Wait a brief moment for streams to finish writing
+      await new Promise(resolve => setTimeout(resolve, 100));
       
       if (syncReturnCode === 0) {
         console.log('[SCHEDULER] Elasticsearch sync completed successfully');
       } else {
         console.log(`[SCHEDULER] Elasticsearch sync failed (return code: ${syncReturnCode})`);
+        console.log(`[SCHEDULER] Sync stdout:\n${syncStdout}`);
+        console.log(`[SCHEDULER] Sync stderr:\n${syncStderr}`);
       }
       
     } catch (error) {
@@ -256,10 +267,38 @@ scrapeQueue.process(async (job, done) => {
   }
 });
 
-// Function to schedule a job if 20 minutes has passed since last job start
+// Function to log time remaining until next scraping job
+async function logTimeRemaining() {
+  const lastJobStart = await redis.get(LAST_JOB_KEY);
+  const now = Date.now();
+  
+  if (!lastJobStart) {
+    console.log('[SCHEDULER] No previous job found. Next scraping will start immediately when scheduled.');
+    return;
+  }
+  
+  const timeSinceLastJob = now - parseInt(lastJobStart, 10);
+  const timeRemaining = INTERVAL_MS - timeSinceLastJob;
+  
+  if (timeRemaining > 0) {
+    const minutesRemaining = Math.ceil(timeRemaining / (60 * 1000));
+    const hoursRemaining = Math.floor(minutesRemaining / 60);
+    const minsRemaining = minutesRemaining % 60;
+    
+    if (hoursRemaining > 0) {
+      console.log(`[SCHEDULER] Next scraping job in ${hoursRemaining}h ${minsRemaining}m`);
+    } else {
+      console.log(`[SCHEDULER] Next scraping job in ${minsRemaining}m`);
+    }
+  } else {
+    console.log('[SCHEDULER] Ready to schedule next scraping job');
+  }
+}
+
+// Function to schedule a job if 1 hour has passed since last job start
 async function maybeScheduleJob() {
   const lastJobStart = await redis.get(LAST_JOB_KEY);
-    const now = Date.now();
+  const now = Date.now();
   if (!lastJobStart || now - parseInt(lastJobStart, 10) >= INTERVAL_MS) {
     // Check if a job is already waiting or running
     const activeCount = await scrapeQueue.getActiveCount();
@@ -274,10 +313,19 @@ async function maybeScheduleJob() {
 // Clear the queue on startup
 scrapeQueue.obliterate({ force: true }).then(() => {
   console.log('[BULL] Queue cleared on startup.');
+  //console.log('[SCHEDULER] Using MongoDB URI:', MONGODB_URI);
+  
   // On process start, check every minute if a new job should be scheduled
   setInterval(maybeScheduleJob, CHECK_INTERVAL_MS);
+  
+  // Log time remaining every 5 minutes
+  setInterval(logTimeRemaining, LOG_INTERVAL_MS);
+  
   // Also check immediately on startup
   maybeScheduleJob();
+  
+  // Log time remaining immediately on startup
+  logTimeRemaining();
 });
 
 // Optional: Log job events
