@@ -4,7 +4,7 @@
   "description": "Backend for Google Scholar publication scraper with Elasticsearch",
   "main": "scheduler.js",
   "engines": {
-    "node": ">=20.18.1"
+    "node": "20"
   },
   "scripts": {
     "start": "node scheduler.js",
