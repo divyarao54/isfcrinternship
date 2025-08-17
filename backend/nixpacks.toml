@@ -1,0 +1,5 @@
+[phases.setup]
+nixPkgs = ["nodejs_20", "python311"]
+
+[variables]
+NPM_CONFIG_PRODUCTION = "false"

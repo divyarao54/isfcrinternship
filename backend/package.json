@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Backend for Google Scholar publication scraper with Elasticsearch",
   "main": "scheduler.js",
+  "engines": {
+    "node": ">=20.18.1"
+  },
   "scripts": {
     "start": "node scheduler.js",
     "scrape": "node scraper.js",
