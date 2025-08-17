@@ -866,9 +866,8 @@ def search_papers():
         backend_dir = os.path.dirname(__file__)
         search_script_path = os.path.join(backend_dir, 'searchPaper.js')
         
-        # Set environment variable for the search script
+        # Inherit environment variables for the search script (use provided ELASTIC_* vars)
         env = os.environ.copy()
-        env['ELASTIC_NODE'] = 'http://localhost:9200'
         
         # Create a temporary script that accepts the query as an argument
         temp_script = f'''
@@ -2353,6 +2352,7 @@ if __name__ == '__main__':
         print(f'Failed to start scheduler.js: {e}')
 
 if __name__ == '__main__':
-    port = int(os.getenv('API_PORT', 5000))
+    # Prefer Railway's PORT, fallback to API_PORT, then 5000 locally
+    port = int(os.getenv('PORT', os.getenv('API_PORT', 5000)))
     # Disable debug mode and auto-reloader to prevent conflicts with Celery
-    app.run(host='0.0.0.0', port=port, debug=False, use_reloader=False) 
+    app.run(host='0.0.0.0', port=port, debug=False, use_reloader=False)
