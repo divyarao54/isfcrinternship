@@ -20,15 +20,27 @@ import uuid
 from db_config import db_manager
 
 # HuggingFace summarization
-from transformers import pipeline
-
 load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
 
-# Initialize summarization pipeline (loads model once)
-summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
+# Summarization: lazy-load and allow disabling in low-resource environments
+summarizer = None
+def get_summarizer():
+	global summarizer
+	if os.getenv('DISABLE_SUMMARIZER', '').lower() in ('1', 'true', 'yes'):
+		raise RuntimeError('Summarizer disabled by DISABLE_SUMMARIZER env')
+	if summarizer is None:
+		from transformers import pipeline
+		# Load model on first use only
+		# Note: This can be heavy on memory/CPU; keep disabled on small hosts
+		summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
+	return summarizer
+
+@app.route('/health', methods=['GET'])
+def health_check():
+	return jsonify({'status': 'ok'}), 200
 # -------- Awards config ---------
 def get_frontend_assets_dir():
     backend_dir = os.path.dirname(__file__)

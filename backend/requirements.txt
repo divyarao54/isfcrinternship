@@ -1,0 +1,11 @@
+Flask==3.0.3
+flask-cors==4.0.0
+python-dotenv==1.0.1
+pymongo==4.7.2
+bcrypt==4.2.0
+requests==2.32.3
+pdfminer.six==20231228
+
+# Optional heavy dependency. Set DISABLE_SUMMARIZER=1 on small hosts.
+transformers==4.42.4
+torch==2.3.1
