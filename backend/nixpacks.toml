@@ -3,3 +3,11 @@ nixPkgs = ["nodejs_20", "python311"]
 
 [variables]
 NPM_CONFIG_PRODUCTION = "false"
+
+[phases.install]
+cmds = [
+  "corepack enable",
+  "npm --version",
+  "node --version",
+  "npm ci --omit=dev"
+]
