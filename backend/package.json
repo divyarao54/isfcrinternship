@@ -26,6 +26,6 @@
     "mongoose": "^8.0.3",
     "node-cron": "^3.0.3",
     "plotly.js-dist-min": "^3.0.1",
-    "puppeteer": "^21.7.0"
+    "puppeteer": "^24.16.2"
   }
 }
