@@ -44,45 +44,7 @@ const Home = () => {
         fetchMetrics();
     }, []);
 
-    const handleAddPatent = () => {
-        if (!teacherName.trim()) {
-            alert("Please enter your name to add a patent.");
-            return;
-        }
-        setEditingPatent(null);
-        setShowPatentForm(true);
-        setShowPatentList(false);
-    };
-
-    const handleEditPatents = () => {
-        if (!teacherName.trim()) {
-            alert("Please enter your name to edit patents.");
-            return;
-        }
-        setShowPatentList(true);
-        setShowPatentForm(false);
-    };
-
-    const handlePatentFormClose = () => {
-        setShowPatentForm(false);
-        setEditingPatent(null);
-    };
-
-    const handlePatentListClose = () => {
-        setShowPatentList(false);
-    };
-
-    const handleEditPatent = (patent) => {
-        setEditingPatent(patent);
-        setShowPatentForm(true);
-        setShowPatentList(false);
-    };
-
-    const handlePatentSuccess = () => {
-        setShowPatentForm(false);
-        setEditingPatent(null);
-        alert("Publication saved successfully!");
-    };
+    // Removed unused handlers for patent UI
 
     return (
         <div className="home-container" style={{backgroundColor: '#f4f6f8', width: '1500px', marginLeft: '-10px', overflow: 'hidden'}}>
