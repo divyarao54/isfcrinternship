@@ -8,8 +8,34 @@ const os = require('os');
 require('dotenv').config();
 
 // Prefer a single connection URL (works for Redis Cloud/Upstash/Railway Redis)
-const REDIS_URL = process.env.REDIS_URL || process.env.UPSTASH_REDIS_URL || 'redis://127.0.0.1:6379';
-const redis = new Redis(REDIS_URL);
+const REDIS_URL = process.env.REDIS_URL || process.env.UPSTASH_REDIS_URL || '';
+const REDIS_HOST = process.env.REDIS_HOST;
+const REDIS_PORT = process.env.REDIS_PORT ? parseInt(process.env.REDIS_PORT, 10) : undefined;
+const REDIS_PASSWORD = process.env.REDIS_PASSWORD;
+const REDIS_TLS = (process.env.REDIS_TLS || process.env.REDIS_USE_TLS || '').toString().toLowerCase() === 'true';
+
+function createRedisClient() {
+  if (REDIS_URL) {
+    const isTls = REDIS_URL.startsWith('rediss://');
+    const urlOptions = isTls ? { tls: { rejectUnauthorized: false } } : {};
+    return new Redis(REDIS_URL, urlOptions);
+  }
+  if (REDIS_HOST && REDIS_PORT) {
+    const opts = {
+      host: REDIS_HOST,
+      port: REDIS_PORT,
+      password: REDIS_PASSWORD,
+    };
+    if (REDIS_TLS) {
+      opts.tls = { rejectUnauthorized: false };
+    }
+    return new Redis(opts);
+  }
+  // Fallback to local
+  return new Redis({ host: '127.0.0.1', port: 6379 });
+}
+
+const redis = createRedisClient();
 const LAST_JOB_KEY = 'scrape:lastJobStart';
 const INTERVAL_MS = 30 * 24 * 60 * 60 * 1000; // 1 month (30 days)
 const CHECK_INTERVAL_MS = 60 * 1000; // Check every 1 minute
@@ -19,9 +45,10 @@ const LOG_INTERVAL_MS = 5 * 60 * 1000; // Log every 5 minutes
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/research_papers';
 const DB_NAME = 'research_papers';
 
-// Create a Bull queue for scraping jobs
-// Bull accepts a Redis connection string directly
-const scrapeQueue = new Bull('scrape-queue', REDIS_URL);
+// Create a Bull queue for scraping jobs, using a custom client so TLS options are applied consistently
+const scrapeQueue = new Bull('scrape-queue', {
+  createClient: () => createRedisClient(),
+});
 
 // Function to create a temp file path
 function createTempFilePath(prefix) {

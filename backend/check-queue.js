@@ -2,9 +2,25 @@ const Queue = require('bull');
 require('dotenv').config();
 
 async function checkQueue() {
-  // Create a Bull queue instance
-  const REDIS_URL = process.env.REDIS_URL || process.env.UPSTASH_REDIS_URL || 'redis://127.0.0.1:6379';
-  const scrapingQueue = new Queue('scraping-queue', REDIS_URL);
+  // Create a Bull queue instance supporting URL or host/port/password
+  const REDIS_URL = process.env.REDIS_URL || process.env.UPSTASH_REDIS_URL || '';
+  const REDIS_HOST = process.env.REDIS_HOST;
+  const REDIS_PORT = process.env.REDIS_PORT ? parseInt(process.env.REDIS_PORT, 10) : undefined;
+  const REDIS_PASSWORD = process.env.REDIS_PASSWORD;
+  const REDIS_TLS = (process.env.REDIS_TLS || process.env.REDIS_USE_TLS || '').toString().toLowerCase() === 'true';
+
+  const queueOptions = REDIS_URL
+    ? REDIS_URL
+    : {
+        redis: {
+          host: REDIS_HOST || '127.0.0.1',
+          port: REDIS_PORT || 6379,
+          password: REDIS_PASSWORD,
+          tls: REDIS_TLS ? { rejectUnauthorized: false } : undefined,
+        },
+      };
+
+  const scrapingQueue = new Queue('scraping-queue', queueOptions);
 
   try {
     // Get queue information
