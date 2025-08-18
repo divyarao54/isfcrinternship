@@ -1,17 +1,8 @@
 [phases.setup]
 nixPkgs = ["nodejs_20", "python311"]
 
-[variables]
-NPM_CONFIG_PRODUCTION = "false"
-
 [phases.install]
-cmds = [
-  "corepack enable",
-  "npm --version",
-  "node --version",
-  "npm ci --omit=dev",
-  "pip install -r requirements.txt"
-]
+cmds = ["npm ci --omit=dev", "pip install -r requirements.txt"]
 
 [start]
 cmd = "python api_server.py"
