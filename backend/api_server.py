@@ -257,48 +257,10 @@ def run_update_all_task(task_id):
             except:
                 pass
         
-        # Sync to Elasticsearch
-        update_task_status(task_id, 'running', {'message': 'Syncing to Elasticsearch...'})
-        
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False, encoding='utf-8') as sync_stdout_file, \
-             tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False, encoding='utf-8') as sync_stderr_file:
-            sync_stdout_path = sync_stdout_file.name
-            sync_stderr_path = sync_stderr_file.name
-        
-        sync_process = subprocess.Popen(
-            ['node', 'syncToElastic.js'],
-            cwd=os.path.dirname(os.path.dirname(__file__)),
-            stdout=open(sync_stdout_path, 'w', encoding='utf-8'),
-            stderr=open(sync_stderr_path, 'w', encoding='utf-8'),
-            env=dict(os.environ, PYTHONIOENCODING='utf-8', NODE_OPTIONS='--max-old-space-size=4096')
-        )
-        
-        try:
-            sync_return_code = sync_process.wait(timeout=300)
-        except subprocess.TimeoutExpired:
-            sync_process.kill()
-            sync_return_code = -1
-        
-        with open(sync_stdout_path, 'r', encoding='utf-8', errors='replace') as f:
-            sync_stdout = f.read()
-        with open(sync_stderr_path, 'r', encoding='utf-8', errors='replace') as f:
-            sync_stderr = f.read()
-        
-        # Clean up temp files
-        try:
-            os.unlink(sync_stdout_path)
-            os.unlink(sync_stderr_path)
-        except:
-            pass
-        
+        # Complete task (Elasticsearch sync removed)
         update_task_status(task_id, 'completed', {
             'message': f'Update completed for {len(teachers)} teachers',
-            'results': results,
-            'sync_result': {
-                'return_code': sync_return_code,
-                'stdout': sync_stdout[:500],
-                'stderr': sync_stderr[:500]
-            }
+            'results': results
         })
         
     except Exception as e:
@@ -722,294 +684,92 @@ def delete_teacher_publication(teacher_id, pub_id):
 
 @app.route('/elasticsearch/status', methods=['GET'])
 def check_elasticsearch_status():
-    """Check Elasticsearch sync status and list available indices"""
-    try:
-        import subprocess
-        import json
-        import tempfile
-        import os
-        
-        # Get the absolute path to client.js (now in backend directory)
-        backend_dir = os.path.dirname(__file__)
-        client_path = os.path.join(backend_dir, 'client.js')
-        client_path_fixed = client_path.replace("\\", "/")
-        
-        # Create a simple Node.js script to check Elasticsearch
-        check_script = f'''
-const client = require('{client_path_fixed}');
-client.cat.indices({{format: 'json'}})
-  .then(res => {{
-    console.log(JSON.stringify(res.body));
-  }})
-  .catch(err => {{
-    console.error('Error:', err.message);
-    process.exit(1);
-  }});
-'''
-        
-        # Write the script to a temporary file
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.js', delete=False, encoding='utf-8') as f:
-            f.write(check_script)
-            temp_script = f.name
-        
-        # Create temporary files for output
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False, encoding='utf-8') as stdout_file, \
-             tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False, encoding='utf-8') as stderr_file:
-            
-            stdout_path = stdout_file.name
-            stderr_path = stderr_file.name
-        
-        try:
-            # Run the script with output redirected to files
-            process = subprocess.Popen(
-                ['node', temp_script],
-                cwd=backend_dir,  # Run from backend directory where client.js is located
-                stdout=open(stdout_path, 'w', encoding='utf-8'),
-                stderr=open(stderr_path, 'w', encoding='utf-8'),
-                env=dict(os.environ, PYTHONIOENCODING='utf-8', NODE_OPTIONS='--max-old-space-size=4096')
-            )
-            
-            try:
-                return_code = process.wait(timeout=30)
-            except subprocess.TimeoutExpired:
-                process.kill()
-                return jsonify({
-                    'status': 'error',
-                    'message': 'Elasticsearch status check timed out'
-                }), 500
-            
-            # Read the output files
-            with open(stdout_path, 'r', encoding='utf-8', errors='replace') as f:
-                stdout = f.read()
-            with open(stderr_path, 'r', encoding='utf-8', errors='replace') as f:
-                stderr = f.read()
-            
-        finally:
-            # Clean up temp files
-            try:
-                os.unlink(temp_script)
-                os.unlink(stdout_path)
-                os.unlink(stderr_path)
-            except:
-                pass
-        
-        if return_code == 0 and stdout.strip():
-            try:
-                indices = json.loads(stdout)
-                paper_indices = [idx for idx in indices if idx.get('index', '').startswith('papers_')]
-                
-                return jsonify({
-                    'status': 'connected',
-                    'total_indices': len(indices),
-                    'paper_indices': len(paper_indices),
-                    'paper_indices_list': [idx['index'] for idx in paper_indices],
-                    'all_indices': [idx['index'] for idx in indices]
-                }), 200
-            except json.JSONDecodeError:
-                return jsonify({
-                    'status': 'connected',
-                    'message': 'Could not parse indices data',
-                    'raw_output': stdout
-                }), 200
-        else:
-            return jsonify({
-                'status': 'error',
-                'message': 'Failed to connect to Elasticsearch',
-                'error': stderr or 'No output from Elasticsearch'
-            }), 500
-            
-    except Exception as error:
-        return jsonify({
-            'status': 'error',
-            'message': 'Error checking Elasticsearch status',
-            'error': str(error)
-        }), 500
+	return jsonify({'status': 'disabled', 'message': 'Elasticsearch is no longer used. Search is powered by MongoDB.'}), 200
 
 @app.route('/search', methods=['GET'])
 def search_papers():
-    """Search papers across all Elasticsearch indices"""
+    """Search papers across all MongoDB teacher collections using case-insensitive regex."""
     try:
-        import subprocess
-        import json
-        import tempfile
-        import os
-        
-        # Get search query from request parameters
+        from db_config import get_collection
+        import re as _re
+
         query = request.args.get('q', '').strip()
         if not query:
             return jsonify({'error': 'No search query provided'}), 400
-        
-        # Get the absolute path to searchPaper.js (now in backend directory)
-        backend_dir = os.path.dirname(__file__)
-        search_script_path = os.path.join(backend_dir, 'searchPaper.js')
-        
-        # Inherit environment variables for the search script (use provided ELASTIC_* vars)
-        env = os.environ.copy()
-        
-        # Create a temporary script that accepts the query as an argument
-        client_path = os.path.join(backend_dir, 'client.js').replace("\\", "/")
-        temp_script = f'''
-const client = require('{client_path}');
-
-async function getTeacherIndices() {{
-  try {{
-    const indices = await client.cat.indices({{ format: 'json' }});
-    return indices
-      .filter(index => index.index.startsWith('papers_'))
-      .map(index => index.index);
-  }} catch (error) {{
-    console.error('Error getting indices:', error.message);
-    return [];
-  }}
-}}
-
-async function searchPapers(keyword) {{
-  const teacherIndices = await getTeacherIndices();
-  
-  if (teacherIndices.length === 0) {{
-    console.log('[]');
-    return;
-  }}
-
-  try {{
-    const result = await client.search({{
-      index: teacherIndices,
-      query: {{
-        multi_match: {{
-          query: keyword,
-          fields: ['title', 'authors', 'description', 'summary'],
-          fuzziness: 'AUTO',
-        }},
-      }},
-      size: 100,
-    }});
-
-    const keywordLower = keyword.toLowerCase();
-    const filtered = result.hits.hits.filter(hit => {{
-      const {{ title = '', authors = '', description = '', summary = '' }} = hit._source;
-      return (
-        title.toLowerCase().includes(keywordLower) ||
-        authors.toLowerCase().includes(keywordLower) ||
-        description.toLowerCase().includes(keywordLower) ||
-        summary.toLowerCase().includes(keywordLower)
-      );
-    }});
-
-    // Deduplicate by composite key: title+year+authors (case-insensitive, trimmed)
-    const seenKeys = new Set();
-    const uniqueResults = [];
-
-    for (const hit of filtered) {{
-      const paper = hit._source;
-      const title = (paper.title || '').trim().toLowerCase();
-      const year = (paper.year || '').toString().trim();
-      const authors = (paper.authors || '').trim().toLowerCase();
-      const key = `${{title}}|${{year}}|${{authors}}`;
-      if (seenKeys.has(key)) {{
-        continue;
-      }}
-      seenKeys.add(key);
-      uniqueResults.push({{
-        _id: paper._id || '',
-        title: paper.title || '',
-        authors: paper.authors || '',
-        year: paper.year || '',
-        url: paper.url || '',
-        teacherName: paper.teacherName || '',
-        index: hit._index,
-        citationCount: paper.citationCount || 0,
-        description: paper.description || '',
-        summary: paper.summary || '',
-        source: paper.source || '',
-        journal: paper.journal || '',
-        conference: paper.conference || '',
-        book: paper.book || '',
-        pdfLink: paper.pdfLink || ''
-      }});
-    }}
-
-    // Limit to 50 results after deduplication
-    const finalResults = uniqueResults.slice(0, 50);
-    console.log(JSON.stringify(finalResults));
-  }} catch (error) {{
-    console.error('Search error:', error.message);
-    console.log('[]');
-  }}
-}}
-
-const keyword = process.argv[2] || '';
-searchPapers(keyword);
-'''
-        
-        # Write the script to a temporary file
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.js', delete=False, encoding='utf-8') as f:
-            f.write(temp_script)
-            temp_script_path = f.name
-        
-        # Create temporary files for output
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False, encoding='utf-8') as stdout_file, \
-             tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False, encoding='utf-8') as stderr_file:
-            
-            stdout_path = stdout_file.name
-            stderr_path = stderr_file.name
-        
         try:
-            # Run the search script with the query as argument
-            process = subprocess.Popen(
-                ['node', temp_script_path, query],
-                cwd=backend_dir,
-                stdout=open(stdout_path, 'w', encoding='utf-8'),
-                stderr=open(stderr_path, 'w', encoding='utf-8'),
-                env=env
-            )
-            
-            try:
-                return_code = process.wait(timeout=30)
-            except subprocess.TimeoutExpired:
-                process.kill()
-                return jsonify({
-                    'error': 'Search timed out'
-                }), 500
-            
-            # Read the output files
-            with open(stdout_path, 'r', encoding='utf-8', errors='replace') as f:
-                stdout = f.read()
-            with open(stderr_path, 'r', encoding='utf-8', errors='replace') as f:
-                stderr = f.read()
-            
-        finally:
-            # Clean up temp files
-            try:
-                os.unlink(temp_script)
-                os.unlink(stdout_path)
-                os.unlink(stderr_path)
-            except:
-                pass
-        
-        if return_code == 0 and stdout.strip():
-            try:
-                results = json.loads(stdout)
-                return jsonify({
-                    'query': query,
-                    'total_results': len(results),
-                    'results': results
-                }), 200
-            except json.JSONDecodeError:
-                return jsonify({
-                    'error': 'Invalid search results format',
-                    'raw_output': stdout
-                }), 500
-        else:
-            return jsonify({
-                'error': 'Search failed',
-                'stderr': stderr
-            }), 500
-            
-    except Exception as error:
+            limit = int(request.args.get('limit', 50))
+        except Exception:
+            limit = 50
+
+        escaped = _re.escape(query)
+        regex = {'$regex': escaped, '$options': 'i'}
+
+        db = get_collection('teachers').database
+        all_collections = db.list_collection_names()
+        teacher_paper_collections = [col for col in all_collections if col.startswith('papers_')]
+
+        results = []
+        for col_name in teacher_paper_collections:
+            col = db.get_collection(col_name)
+            cursor = col.find({
+                '$or': [
+                    {'title': regex},
+                    {'authors': regex},
+                    {'description': regex},
+                    {'summary': regex},
+                ]
+            })
+
+            for doc in cursor:
+                results.append({
+                    '_id': str(doc.get('_id', '')),
+                    'title': doc.get('title', ''),
+                    'authors': doc.get('authors', ''),
+                    'year': doc.get('year', ''),
+                    'url': doc.get('url', ''),
+                    'teacherName': doc.get('teacherName', ''),
+                    'index': col_name,
+                    'citationCount': doc.get('citationCount', 0),
+                    'description': doc.get('description', ''),
+                    'summary': doc.get('summary', ''),
+                    'source': doc.get('source', ''),
+                    'journal': doc.get('journal', ''),
+                    'conference': doc.get('conference', ''),
+                    'book': doc.get('book', ''),
+                    'pdfLink': doc.get('pdfLink', ''),
+                })
+
+        seen_keys = set()
+        unique_results = []
+        for hit in results:
+            raw_title = hit.get('title', '')
+            if not isinstance(raw_title, str):
+                raw_title = str(raw_title or '')
+            title = raw_title.strip().lower()
+
+            year = hit.get('year') or ''
+
+            raw_authors = hit.get('authors', '')
+            if not isinstance(raw_authors, str):
+                raw_authors = str(raw_authors or '')
+            authors = raw_authors.strip().lower()
+
+            key = f"{title}|{year}|{authors}"
+            if key in seen_keys:
+                continue
+            seen_keys.add(key)
+            unique_results.append(hit)
+
+        final_results = unique_results[:max(1, limit)]
+
         return jsonify({
-            'error': 'Error performing search',
-            'message': str(error)
-        }), 500
+            'query': query,
+            'total_results': len(final_results),
+            'results': final_results
+        }), 200
+
+    except Exception as error:
+        return jsonify({'error': 'Error performing search', 'message': str(error)}), 500
 
 @app.route('/api/community/stats', methods=['GET'])
 def get_community_stats():

@@ -9,7 +9,7 @@ const AdminPage = () => {
   const [scholarLink, setScholarLink] = useState("");
   const [status, setStatus] = useState("");
   // const [isLoading, setIsLoading] = useState(false);
-  // const [elasticsearchStatus, setElasticsearchStatus] = useState(null);
+  // Elasticsearch removed
 
   //login functionality states
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -605,21 +605,7 @@ const AdminPage = () => {
   };
 
   // Add missing handlers for ES Status and Update All
-  const checkElasticsearchStatus = async () => {
-    try {
-      setStatus("🔄 Checking Elasticsearch status...");
-      const response = await axios.get("http://localhost:5000/elasticsearch/status");
-      // eslint-disable-next-line no-unused-vars
-      const _esStatus = response.data;
-      if (response.data.status === 'connected') {
-        setStatus(`✅ Elasticsearch connected! Found ${response.data.paper_indices} paper indices.`);
-      } else {
-        setStatus(`❌ Elasticsearch error: ${response.data.message}`);
-      }
-    } catch (error) {
-      setStatus(`❌ Failed to check Elasticsearch status: ${error.message}`);
-    }
-  };
+  // checkElasticsearchStatus removed
 
   // Fetch teachers on mount for the add publication dropdown
   useEffect(() => {
@@ -1056,7 +1042,7 @@ const AdminPage = () => {
           <div className="admin-buttons">
             <button onClick={() => { handleScrape(); handleAdminActivity(); }} style={{ background: '#182745', color: 'white' }}>Scrape</button>
             <button onClick={() => { openDeleteModal(); handleAdminActivity(); }} style={{ background: '#182745', color: 'white' }}>Delete</button>
-            <button onClick={() => { checkElasticsearchStatus(); handleAdminActivity(); }} style={{ background: '#182745', color: 'white' }}>Check ES Status</button>
+            {/* Check ES Status removed */}
             <button onClick={() => { handleUpdateAll(); handleAdminActivity(); }} style={{ background: '#182745', color: 'white' }}>Update All</button>
           </div>
           <div className="admin-account-buttons">

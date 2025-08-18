@@ -198,71 +198,7 @@ async function runUpdateAll() {
       }
     }
     
-    // Sync to Elasticsearch
-    console.log('[SCHEDULER] Syncing to Elasticsearch...');
-    
-    const syncStdoutPath = createTempFilePath('sync_stdout');
-    const syncStderrPath = createTempFilePath('sync_stderr');
-    const syncStdoutStream = fs.createWriteStream(syncStdoutPath);
-    const syncStderrStream = fs.createWriteStream(syncStderrPath);
-    
-    try {
-      const syncProcess = subprocess.spawn('node', ['syncToElastic.js'], {
-        cwd: path.dirname(__dirname), // Run from root directory
-        stdio: ['ignore', 'pipe', 'pipe'], // Use pipes instead of file descriptors for Windows compatibility
-        env: { ...process.env, PYTHONIOENCODING: 'utf-8', NODE_OPTIONS: '--max-old-space-size=4096' }
-      });
-      
-      // Collect output DURING sync process execution
-      let syncStdout = '';
-      let syncStderr = '';
-      
-      syncProcess.stdout.on('data', (data) => {
-        const dataStr = data.toString();
-        syncStdout += dataStr;
-        syncStdoutStream.write(data);
-      });
-      
-      syncProcess.stderr.on('data', (data) => {
-        const dataStr = data.toString();
-        syncStderr += dataStr;
-        syncStderrStream.write(data);
-      });
-      
-      const syncReturnCode = await new Promise((resolve) => {
-        const timeout = setTimeout(() => {
-          syncProcess.kill();
-          resolve(-1);
-        }, 300000); // 5 minute timeout
-        
-        syncProcess.on('close', (code) => {
-          clearTimeout(timeout);
-          resolve(code);
-        });
-      });
-      
-      // Close streams after sync process completes
-      syncStdoutStream.end();
-      syncStderrStream.end();
-      
-      // Wait a brief moment for streams to finish writing
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      if (syncReturnCode === 0) {
-        console.log('[SCHEDULER] Elasticsearch sync completed successfully');
-      } else {
-        console.log(`[SCHEDULER] Elasticsearch sync failed (return code: ${syncReturnCode})`);
-        console.log(`[SCHEDULER] Sync stdout:\n${syncStdout}`);
-        console.log(`[SCHEDULER] Sync stderr:\n${syncStderr}`);
-      }
-      
-    } catch (error) {
-      console.error('[SCHEDULER] Error during Elasticsearch sync:', error.message);
-    } finally {
-      try { fs.unlinkSync(syncStdoutPath); } catch (e) {}
-      try { fs.unlinkSync(syncStderrPath); } catch (e) {}
-    }
-    
+    // Elasticsearch sync removed
     console.log(`[SCHEDULER] Update All completed for ${teachers.length} teachers`);
     
   } catch (error) {

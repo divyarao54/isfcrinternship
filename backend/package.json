@@ -12,12 +12,9 @@
     "trigger": "node scheduler.js --trigger",
     "check-queue": "node check-queue.js",
     "clean-queue": "node clean-queue.js",
-    "sync-elastic": "node syncToElastic.js",
-    "search": "node searchPaper.js",
     "diagnose": "node diagnose_elasticsearch.js"
   },
   "dependencies": {
-    "@elastic/elasticsearch": "^9.1.1",
     "axios": "^1.10.0",
     "bull": "^4.12.2",
     "dotenv": "^16.3.1",
