@@ -8,7 +8,7 @@ import PublicationForm from '../components/PatentForm';
 const AdminPage = () => {
   const [scholarLink, setScholarLink] = useState("");
   const [status, setStatus] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  // const [isLoading, setIsLoading] = useState(false);
   const [elasticsearchStatus, setElasticsearchStatus] = useState(null);
 
   //login functionality states
@@ -42,8 +42,8 @@ const AdminPage = () => {
   const [showSecurityCodeModal, setShowSecurityCodeModal] = useState(false);
 
   // Delete functionality states
-  const [showTeacherList, setShowTeacherList] = useState(false);
-  const [showPublicationList, setShowPublicationList] = useState(false);
+  // const [showTeacherList, setShowTeacherList] = useState(false);
+  // const [showPublicationList, setShowPublicationList] = useState(false);
   const [teachers, setTeachers] = useState([]);
   const [selectedTeacher, setSelectedTeacher] = useState(null);
   const [publications, setPublications] = useState([]);

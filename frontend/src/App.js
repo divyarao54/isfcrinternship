@@ -11,7 +11,6 @@ import PublicationDetailsPage from './pages/PublicationDetailsPage';
 import SearchResultsPage from './pages/SearchResultsPage';
 import ProjectRepository from './pages/ProjectRepository';
 import FAQ from './pages/FAQ';
-import SummarizationStatus from './components/SummarizationStatus';
 
 function App() {
   return (

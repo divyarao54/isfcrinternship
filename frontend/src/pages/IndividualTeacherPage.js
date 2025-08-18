@@ -1,13 +1,12 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
-import PatentForm from "../components/PatentForm";
+//
 //import PatentList from "../components/PatentList";
 import "../styles/individualTeacher.css";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { BarChart, Bar, Cell } from 'recharts';
-import PublicationTypeSelector from '../components/PublicationTypeSelector';
-import PublicationForm from '../components/PatentForm';
+//
 
 const IndividualTeacherPage = () => {
     const { teacherId } = useParams();
@@ -25,14 +24,7 @@ const IndividualTeacherPage = () => {
     const [statsLoading, setStatsLoading] = useState(true);
     const [statsError, setStatsError] = useState("");
     const [drillDownView, setDrillDownView] = useState(null); // 'books', 'patents', 'journals', 'conferences'
-    const [showPatentForm, setShowPatentForm] = useState(false);
-    const [showTypeSelector, setShowTypeSelector] = useState(false);
-    const [selectedType, setSelectedType] = useState(null);
-    const handlePatentSuccess = () => {
-        setShowPatentForm(false);
-        alert('Publication added successfully!');
-        fetchTeacherData(); // Refresh publications
-    };
+    // Removed unused state and handlers related to patent form and type selector
 
     const fetchTeacherData = useCallback(async () => {
         try {

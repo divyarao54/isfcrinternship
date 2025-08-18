@@ -39,7 +39,7 @@ const Navbar = () => {
               onKeyPress={handleKeyPress}
             />
             <button type="submit" className="search-button">
-            <img src="/search.png" ></img>
+            <img src="/search.png" alt="Search" />
             </button>
           </form>
         </div>

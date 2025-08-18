@@ -53,7 +53,7 @@ const PublicationForm = ({ teacherName, publicationType, isOpen, onClose, onSucc
         filedOn: publicationType === 'patent' ? formData.filedOn : '',
         grantedOn: publicationType === 'patent' ? formData.grantedOn : '',
       };
-      const res = await axios.post(`http://localhost:5000/teachers/${encodeURIComponent(teacherName)}/add_publication`, payload, {
+      await axios.post(`http://localhost:5000/teachers/${encodeURIComponent(teacherName)}/add_publication`, payload, {
         headers: { 'Content-Type': 'application/json' },
       });
       if (onSuccess) onSuccess();

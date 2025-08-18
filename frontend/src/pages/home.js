@@ -1,23 +1,16 @@
 import React, { useState, useEffect } from "react";
 import YearlyCommunityDashboard from "../pages/YearlyCommunityDashboard";
-import Navbar from "../components/navbar";
+// import Navbar from "../components/navbar";
 import "../styles/home.css";
-import ThreeDBarChart from "../components/ThreeDBarChart";
+// import ThreeDBarChart from "../components/ThreeDBarChart";
 import axios from "axios";
-import PatentForm from '../components/PatentForm';
-import PublicationTypeSelector from '../components/PublicationTypeSelector';
-import PublicationForm from '../components/PatentForm';
+// import PatentForm from '../components/PatentForm';
+// import PublicationTypeSelector from '../components/PublicationTypeSelector';
+// import PublicationForm from '../components/PatentForm';
 
 const Home = () => {
-    const [teacherName, setTeacherName] = useState("");
-    const [teachers, setTeachers] = useState([]); // Add teachers state
-    const [customTeacherName, setCustomTeacherName] = useState(""); // For 'Other'
-    const [showPatentForm, setShowPatentForm] = useState(false);
-    const [showPatentList, setShowPatentList] = useState(false);
-    const [editingPatent, setEditingPatent] = useState(null);
+    // Removed unused states to satisfy linter
     const [teacherMetrics, setTeacherMetrics] = useState([]);
-    const [showTypeSelector, setShowTypeSelector] = useState(false);
-    const [selectedType, setSelectedType] = useState(null);
 
     useEffect(() => {
         // Fetch teacher metrics for 3D chart
@@ -25,7 +18,6 @@ const Home = () => {
             try {
                 const teachersResp = await axios.get('http://localhost:5000/teachers');
                 const teachers = teachersResp.data.teachers || [];
-                setTeachers(teachers.map(t => t.name)); // Store teacher names for dropdown
                 const metrics = await Promise.all(teachers.map(async (teacher) => {
                     let hIndex = 0, i10Index = 0, publications = 0;
                     try {

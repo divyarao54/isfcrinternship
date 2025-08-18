@@ -1,5 +1,5 @@
 import React from 'react';
-import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer, Text } from 'recharts';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 
 // Distinct color themes for each layer
 const PUBS_COLORS = ['#1976d2', '#1565c0', '#0d47a1', '#42a5f5', '#90caf9', '#1e88e5', '#1565c0', '#0d47a1', '#1976d2', '#42a5f5'];

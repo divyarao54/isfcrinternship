@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import axios from "axios";
 import "../styles/publicationDetails.css";
 
 const PublicationDetailsPage = () => {
     const { teacherId, publicationId } = useParams();
-    const navigate = useNavigate();
     const [publication, setPublication] = useState(null);
     const [teacher, setTeacher] = useState(null);
     const [loading, setLoading] = useState(true);

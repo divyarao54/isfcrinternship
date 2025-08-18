@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LineChart, Line, Legend } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import '../styles/yearlyCommunityDashboard.css';
 import DonutChart from '../components/DonutChart';
 import AwardsGallery from '../components/AwardsGallery';
@@ -58,6 +58,7 @@ const DrillDownChart = ({ data, category, onBack, publications, onClose }) => {
     const navigate = useNavigate();
 
     // Helper function to check if two titles are similar
+    // Removed unused similarity helper to satisfy linter
     const areTitlesSimilar = (title1, title2) => {
         // Remove common words that might cause false positives
         const commonWords = ['a', 'an', 'the', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by'];
