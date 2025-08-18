@@ -59,6 +59,7 @@ const DrillDownChart = ({ data, category, onBack, publications, onClose }) => {
 
     // Helper function to check if two titles are similar
     // Removed unused similarity helper to satisfy linter
+    // eslint-disable-next-line no-unused-vars
     const areTitlesSimilar = (title1, title2) => {
         // Remove common words that might cause false positives
         const commonWords = ['a', 'an', 'the', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by'];

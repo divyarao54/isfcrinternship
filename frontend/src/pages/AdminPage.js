@@ -539,6 +539,7 @@ const AdminPage = () => {
     }
   };
 
+  // eslint-disable-next-line no-unused-vars
   const handleUpdate = async () => {
     try {
       setIsOperationActive(true); // Set operation as active
@@ -556,6 +557,7 @@ const AdminPage = () => {
     }
   };
 
+  // eslint-disable-next-line no-unused-vars
   const handleDelete = async () => {
     try {
       setIsOperationActive(true); // Set operation as active
