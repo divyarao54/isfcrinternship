@@ -9,6 +9,9 @@ cmds = [
   "corepack enable",
   "npm --version",
   "node --version",
-  "npm ci --omit=dev"
+  "npm ci --omit=dev",
   "pip install -r requirements.txt"
 ]
+
+[start]
+cmd = "python api_server.py"
