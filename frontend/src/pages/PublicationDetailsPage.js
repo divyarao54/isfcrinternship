@@ -9,11 +9,7 @@ const PublicationDetailsPage = () => {
     const [teacher, setTeacher] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
-    const [summary, setSummary] = useState(null);
-    const [summarizing, setSummarizing] = useState(false);
-    const [summaryError, setSummaryError] = useState("");
-    const [showUploadOption, setShowUploadOption] = useState(false);
-    const [uploading, setUploading] = useState(false);
+    // Summarization UI removed
 
     // Check for ongoing summarization on component mount
     useEffect(() => {

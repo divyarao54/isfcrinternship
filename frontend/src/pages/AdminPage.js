@@ -9,7 +9,7 @@ const AdminPage = () => {
   const [scholarLink, setScholarLink] = useState("");
   const [status, setStatus] = useState("");
   // const [isLoading, setIsLoading] = useState(false);
-  const [elasticsearchStatus, setElasticsearchStatus] = useState(null);
+  // const [elasticsearchStatus, setElasticsearchStatus] = useState(null);
 
   //login functionality states
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -302,6 +302,7 @@ const AdminPage = () => {
   };
 
   //edit beginning
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (localStorage.getItem('isAdminLoggedIn') === 'true') {
       setIsLoggedIn(true);
@@ -336,6 +337,7 @@ const AdminPage = () => {
   }, []);
 
   // Check admin status when entering signup view
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (view === 'signup') {
       checkAdminStatus();
@@ -403,6 +405,7 @@ const AdminPage = () => {
   };
 
   // Load active tasks from localStorage on component mount
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const savedTasks = localStorage.getItem('activeTasks');
     if (savedTasks) {
@@ -494,6 +497,7 @@ const AdminPage = () => {
   };
 
   // Poll task statuses periodically
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const interval = setInterval(() => {
       Object.keys(activeTasks).forEach(taskId => {

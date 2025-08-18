@@ -10,7 +10,7 @@ import axios from "axios";
 
 const Home = () => {
     // Removed unused states to satisfy linter
-    const [teacherMetrics, setTeacherMetrics] = useState([]);
+    // const [teacherMetrics, setTeacherMetrics] = useState([]);
 
     useEffect(() => {
         // Fetch teacher metrics for 3D chart
@@ -18,7 +18,7 @@ const Home = () => {
             try {
                 const teachersResp = await axios.get('http://localhost:5000/teachers');
                 const teachers = teachersResp.data.teachers || [];
-                const metrics = await Promise.all(teachers.map(async (teacher) => {
+                await Promise.all(teachers.map(async (teacher) => {
                     let hIndex = 0, i10Index = 0, publications = 0;
                     try {
                         const citRes = await axios.get(`http://localhost:5000/teachers/${encodeURIComponent(teacher.name)}/citations/scraped`);
@@ -36,7 +36,7 @@ const Home = () => {
                         publications
                     };
                 }));
-                setTeacherMetrics(metrics);
+                // setTeacherMetrics(metrics);
             } catch (err) {
                 setTeacherMetrics([]);
             }

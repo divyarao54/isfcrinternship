@@ -276,7 +276,7 @@ const YearlyCommunityDashboard = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [drillDownView, setDrillDownView] = useState(null); // e.g., 'conferences', 'journals', 'books', 'patents'
-    const [showDebug, setShowDebug] = useState(false);
+    // const [showDebug, setShowDebug] = useState(false);
     const [allPublications, setAllPublications] = useState([]);
     const [donutData, setDonutData] = useState({ teachers: [] });
     const [popupMetric, setPopupMetric] = useState(null);
