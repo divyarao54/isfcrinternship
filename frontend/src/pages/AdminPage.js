@@ -627,6 +627,7 @@ const AdminPage = () => {
   }, []);
 
   // Add activity listeners for session timeout
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (isLoggedIn) {
       const activityEvents = [
