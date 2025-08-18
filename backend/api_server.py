@@ -2077,14 +2077,17 @@ def delete_yearly_project(project_id):
         return jsonify({'error': str(error)}), 500
 
 # Start the Node.js scheduler as a background process when the Flask app starts
-# Only do this if this script is the main entry point
+# Only do this if this script is the main entry point and Redis is configured
 if __name__ == '__main__':
-    scheduler_path = os.path.join(os.path.dirname(__file__), 'scheduler.js')
-    try:
-        subprocess.Popen(['node', scheduler_path], cwd=os.path.dirname(__file__))
-        print('Started scheduler.js as a background process.')
-    except Exception as e:
-        print(f'Failed to start scheduler.js: {e}')
+    if os.getenv('REDIS_URL') or os.getenv('UPSTASH_REDIS_URL'):
+        scheduler_path = os.path.join(os.path.dirname(__file__), 'scheduler.js')
+        try:
+            subprocess.Popen(['node', scheduler_path], cwd=os.path.dirname(__file__))
+            print('Started scheduler.js as a background process.')
+        except Exception as e:
+            print(f'Failed to start scheduler.js: {e}')
+    else:
+        print('Scheduler not started: set REDIS_URL to enable background jobs.')
 
 if __name__ == '__main__':
     # Prefer Railway's PORT, fallback to API_PORT, then 5000 locally

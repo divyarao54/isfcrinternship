@@ -7,7 +7,9 @@ const fs = require('fs');
 const os = require('os');
 require('dotenv').config();
 
-const redis = new Redis({ host: '127.0.0.1', port: 6379 });
+// Prefer a single connection URL (works for Redis Cloud/Upstash/Railway Redis)
+const REDIS_URL = process.env.REDIS_URL || process.env.UPSTASH_REDIS_URL || 'redis://127.0.0.1:6379';
+const redis = new Redis(REDIS_URL);
 const LAST_JOB_KEY = 'scrape:lastJobStart';
 const INTERVAL_MS = 30 * 24 * 60 * 60 * 1000; // 1 month (30 days)
 const CHECK_INTERVAL_MS = 60 * 1000; // Check every 1 minute
@@ -18,12 +20,8 @@ const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/resear
 const DB_NAME = 'research_papers';
 
 // Create a Bull queue for scraping jobs
-const scrapeQueue = new Bull('scrape-queue', {
-  redis: {
-    host: '127.0.0.1',
-    port: 6379,
-  },
-});
+// Bull accepts a Redis connection string directly
+const scrapeQueue = new Bull('scrape-queue', REDIS_URL);
 
 // Function to create a temp file path
 function createTempFilePath(prefix) {

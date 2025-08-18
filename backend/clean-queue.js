@@ -1,13 +1,9 @@
 const Queue = require('bull');
 require('dotenv').config();
 
-// Create queue instance
-const scrapingQueue = new Queue('scraping-queue', {
-  redis: {
-    host: 'localhost',
-    port: 6379
-  }
-});
+// Create queue instance (use REDIS_URL if provided)
+const REDIS_URL = process.env.REDIS_URL || process.env.UPSTASH_REDIS_URL || 'redis://127.0.0.1:6379';
+const scrapingQueue = new Queue('scraping-queue', REDIS_URL);
 
 async function cleanQueue() {
   try {
