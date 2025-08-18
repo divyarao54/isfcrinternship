@@ -1799,7 +1799,7 @@ def normalize_domain_name(domain_name):
     # If no match found, return the original name with proper capitalization
     return domain_name.title()
 
-@app.route('/api/domains/<domain_name>/teachers', methods=['GET'])
+@app.route('/api/domains/<path:domain_name>/teachers', methods=['GET'])
 def get_teachers_by_domain(domain_name):
     """Get all teachers for a specific domain"""
     try:
@@ -1813,8 +1813,11 @@ def get_teachers_by_domain(domain_name):
         all_domains = domains_collection.distinct('domainName')
         matching_original_names = []
         
+        # Normalize requested name too to compare canonical forms
+        normalized_requested = normalize_domain_name(decoded_domain_name)
+
         for original_name in all_domains:
-            if normalize_domain_name(original_name) == decoded_domain_name:
+            if normalize_domain_name(original_name) == normalized_requested:
                 matching_original_names.append(original_name)
         
         # Find all teachers in any of the matching original domain names
