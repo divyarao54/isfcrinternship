@@ -847,8 +847,9 @@ def search_papers():
         env = os.environ.copy()
         
         # Create a temporary script that accepts the query as an argument
+        client_path = os.path.join(backend_dir, 'client.js').replace("\\", "/")
         temp_script = f'''
-const client = require('{os.path.join(backend_dir, 'client.js').replace("\\", "/")}');
+const client = require('{client_path}');
 
 async function getTeacherIndices() {{
   try {{
