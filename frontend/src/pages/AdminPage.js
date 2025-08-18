@@ -607,7 +607,8 @@ const AdminPage = () => {
     try {
       setStatus("🔄 Checking Elasticsearch status...");
       const response = await axios.get("http://localhost:5000/elasticsearch/status");
-      setElasticsearchStatus(response.data);
+      // eslint-disable-next-line no-unused-vars
+      const _esStatus = response.data;
       if (response.data.status === 'connected') {
         setStatus(`✅ Elasticsearch connected! Found ${response.data.paper_indices} paper indices.`);
       } else {

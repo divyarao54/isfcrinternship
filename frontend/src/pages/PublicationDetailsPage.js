@@ -11,51 +11,7 @@ const PublicationDetailsPage = () => {
     const [error, setError] = useState("");
     // Summarization UI removed
 
-    // Check for ongoing summarization on component mount
-    useEffect(() => {
-        const ongoingSummarization = localStorage.getItem('ongoingSummarization');
-        if (ongoingSummarization) {
-            const summaryData = JSON.parse(ongoingSummarization);
-            if (summaryData.teacherId === teacherId && summaryData.publicationId === publicationId) {
-                setSummarizing(true);
-                setSummaryError("");
-                setSummary(null);
-            }
-        }
-    }, [teacherId, publicationId]);
-
-    // Check summarization status periodically
-    useEffect(() => {
-        if (summarizing) {
-            const checkSummarizationStatus = async () => {
-                try {
-                    const ongoingSummarization = localStorage.getItem('ongoingSummarization');
-                    if (ongoingSummarization) {
-                        const summaryData = JSON.parse(ongoingSummarization);
-                        if (summaryData.teacherId === teacherId && summaryData.publicationId === publicationId) {
-                            // Check if summarization is complete
-                            const response = await axios.get(`http://localhost:5000/api/summarization_status/${summaryData.taskId}`);
-                            if (response.data.status === 'completed') {
-                                setSummary(response.data.summary);
-                                setSummarizing(false);
-                                localStorage.removeItem('ongoingSummarization');
-                            } else if (response.data.status === 'failed') {
-                                setSummaryError(response.data.error || 'Summarization failed');
-                                setSummarizing(false);
-                                localStorage.removeItem('ongoingSummarization');
-                            }
-                            // If still running, continue checking
-                        }
-                    }
-                } catch (error) {
-                    console.error("Error checking summarization status:", error);
-                }
-            };
-
-            const interval = setInterval(checkSummarizationStatus, 2000); // Check every 2 seconds
-            return () => clearInterval(interval);
-        }
-    }, [summarizing, teacherId, publicationId]);
+    // Summarization removed
 
     const fetchPublicationData = useCallback(async () => {
         try {
@@ -82,105 +38,9 @@ const PublicationDetailsPage = () => {
         fetchPublicationData();
     }, [fetchPublicationData]);
 
-    const handleSummarize = async () => {
-        if (!publication.pdfLink) {
-            setSummaryError("No PDF link available for summarization");
-            return;
-        }
+    // Summarization removed
 
-        try {
-            setSummarizing(true);
-            setSummaryError("");
-            setSummary(null);
-            setShowUploadOption(false);
-
-            // Store summarization state in localStorage
-            const summaryData = {
-                teacherId,
-                publicationId,
-                pdfUrl: publication.pdfLink,
-                startTime: new Date().toISOString()
-            };
-            localStorage.setItem('ongoingSummarization', JSON.stringify(summaryData));
-
-            const response = await axios.post('http://localhost:5000/api/summarize_pdf', {
-                pdf_url: publication.pdfLink
-            });
-
-            // If summarization completes immediately
-            if (response.data.summary) {
-                setSummary(response.data.summary);
-                setSummarizing(false);
-                localStorage.removeItem('ongoingSummarization');
-            } else if (response.data.taskId) {
-                // Update localStorage with taskId for background processing
-                summaryData.taskId = response.data.taskId;
-                localStorage.setItem('ongoingSummarization', JSON.stringify(summaryData));
-            }
-        } catch (error) {
-            console.error("Error summarizing PDF:", error);
-            const errorData = error.response?.data;
-            const errorMessage = errorData?.error || "Failed to summarize PDF. Please try again.";
-            const errorDetails = errorData?.details || "";
-            
-            setSummaryError(errorMessage + (errorDetails ? `\n\n${errorDetails}` : ""));
-            setSummarizing(false);
-            localStorage.removeItem('ongoingSummarization');
-            
-            // Show upload option for certain errors
-            if (errorData?.suggestion === 'upload' || 
-                errorMessage.includes('IEEE Explore') || 
-                errorMessage.includes('authentication') || 
-                errorMessage.includes('protected') ||
-                errorMessage.includes('login page')) {
-                setShowUploadOption(true);
-            }
-        }
-    };
-
-    const handleFileUpload = async (event) => {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        if (!file.name.toLowerCase().endsWith('.pdf')) {
-            setSummaryError("Please select a PDF file");
-            return;
-        }
-
-        try {
-            setUploading(true);
-            setSummaryError("");
-            setSummary(null);
-
-            // Store upload summarization state
-            const summaryData = {
-                teacherId,
-                publicationId,
-                fileName: file.name,
-                startTime: new Date().toISOString()
-            };
-            localStorage.setItem('ongoingSummarization', JSON.stringify(summaryData));
-
-            const formData = new FormData();
-            formData.append('file', file);
-
-            const response = await axios.post('http://localhost:5000/api/summarize_pdf_upload', formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
-            });
-
-            setSummary(response.data.summary);
-            setShowUploadOption(false);
-            setUploading(false);
-            localStorage.removeItem('ongoingSummarization');
-        } catch (error) {
-            console.error("Error uploading and summarizing PDF:", error);
-            setSummaryError(error.response?.data?.error || "Failed to summarize uploaded PDF. Please try again.");
-            setUploading(false);
-            localStorage.removeItem('ongoingSummarization');
-        }
-    };
+    // Summarization removed
 
     if (loading) {
         return (

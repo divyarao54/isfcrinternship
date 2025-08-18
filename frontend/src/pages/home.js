@@ -38,7 +38,7 @@ const Home = () => {
                 }));
                 // setTeacherMetrics(metrics);
             } catch (err) {
-                setTeacherMetrics([]);
+                // ignore
             }
         };
         fetchMetrics();
