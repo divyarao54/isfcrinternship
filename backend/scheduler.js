@@ -35,6 +35,38 @@ function createRedisClient() {
   return new Redis({ host: '127.0.0.1', port: 6379 });
 }
 
+// Bull requires specific client settings for subscriber/bclient
+function createBullRedisClient(type) {
+  if (REDIS_URL) {
+    const isTls = REDIS_URL.startsWith('rediss://');
+    const baseOptions = isTls ? { tls: { rejectUnauthorized: false } } : {};
+    if (type === 'subscriber' || type === 'bclient') {
+      return new Redis(REDIS_URL, { ...baseOptions, enableReadyCheck: false, maxRetriesPerRequest: null });
+    }
+    return new Redis(REDIS_URL, baseOptions);
+  }
+  if (REDIS_HOST && REDIS_PORT) {
+    const base = {
+      host: REDIS_HOST,
+      port: REDIS_PORT,
+      password: REDIS_PASSWORD,
+    };
+    if (REDIS_TLS) {
+      base.tls = { rejectUnauthorized: false };
+    }
+    if (type === 'subscriber' || type === 'bclient') {
+      return new Redis({ ...base, enableReadyCheck: false, maxRetriesPerRequest: null });
+    }
+    return new Redis(base);
+  }
+  // Fallback to local
+  const localBase = { host: '127.0.0.1', port: 6379 };
+  if (type === 'subscriber' || type === 'bclient') {
+    return new Redis({ ...localBase, enableReadyCheck: false, maxRetriesPerRequest: null });
+  }
+  return new Redis(localBase);
+}
+
 const redis = createRedisClient();
 const LAST_JOB_KEY = 'scrape:lastJobStart';
 const INTERVAL_MS = 30 * 24 * 60 * 60 * 1000; // 1 month (30 days)
@@ -47,7 +79,7 @@ const DB_NAME = 'research_papers';
 
 // Create a Bull queue for scraping jobs, using a custom client so TLS options are applied consistently
 const scrapeQueue = new Bull('scrape-queue', {
-  createClient: () => createRedisClient(),
+  createClient: (type) => createBullRedisClient(type),
 });
 
 // Function to create a temp file path
