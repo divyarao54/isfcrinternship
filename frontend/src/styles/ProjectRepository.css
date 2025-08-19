@@ -8,7 +8,7 @@
 .project-repository-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: left;
   margin-bottom: 30px;
   padding-bottom: 20px;
   border-bottom: 2px solid #e0e0e0;
@@ -52,8 +52,8 @@
   bottom: 0;
   background: rgba(0, 0, 0, 0.6);
   display: flex;
-  justify-content: center;
-  align-items: center;
+  justify-content: left;
+  align-items: left;
   z-index: 1000;
   padding: 20px;
 }
@@ -83,7 +83,7 @@
 .modal-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: left;
   padding: 24px 24px 20px;
   border-bottom: 1px solid #e0e0e0;
   background: #f8f9fa;
@@ -283,63 +283,69 @@
 
 /* Projects List */
 .projects-list {
-  padding: 0 24px 24px;
-  display: grid;
-  gap: 16px;
+  padding: 0 24px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
 }
 
 .project-card {
-  background: #f8f9fa;
-  border-radius: 8px;
-  padding: 20px;
-  border-left: 4px solid #667eea;
-  transition: all 0.2s ease;
+  background: transparent;
+  padding: 14px 0 14px 24px;
+  border-bottom: 1px solid #ececec;
+  position: relative;
+}
+.project-card::before {
+  content: '—';
+  position: absolute;
+  left: 0;
+  top: 16px;
+  color: #a8a8a8;
+  font-weight: 600;
 }
 
-.project-card:hover {
-  background: #e9ecef;
-  transform: translateX(4px);
-}
+.project-card:hover { background: transparent; }
 
 .project-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 12px;
+  align-items: baseline;
+  margin-bottom: 6px;
 }
 
 .project-title {
   margin: 0;
-  color: #333;
-  font-size: 1.2rem;
-  font-weight: 600;
+  color: #222;
+  font-size: 1.05rem;
+  font-weight: 700;
   flex: 1;
 }
 
 .project-teacher {
-  background: #667eea;
-  color: white;
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 0.85rem;
-  font-weight: 500;
+  background: #eef1f4;
+  color: #39424e;
+  padding: 4px 10px;
+  border-radius: 14px;
+  font-size: 0.8rem;
+  font-weight: 600;
   white-space: nowrap;
   margin-left: 12px;
 }
 
 .project-description {
-  color: #555;
-  line-height: 1.6;
-  margin: 0 0 16px 0;
+  color: #4a4a4a;
+  line-height: 1.5;
+  margin: 0 0 8px 0;
+  font-size: 0.98rem;
 }
 
 .project-students {
-  background: #e3f2fd;
-  color: #1976d2;
-  padding: 8px 12px;
-  border-radius: 6px;
-  font-size: 0.9rem;
-  margin-bottom: 16px;
+  background: transparent;
+  color: #0d6efd;
+  padding: 0;
+  border-radius: 0;
+  font-size: 0.92rem;
+  margin-bottom: 8px;
 }
 
 .project-meta {
@@ -350,9 +356,7 @@
   color: #666;
 }
 
-.project-date {
-  font-style: italic;
-}
+.project-date { font-style: italic; }
 
 /* Add dropdown for Add actions */
 .add-actions { position: relative; display: inline-block; }

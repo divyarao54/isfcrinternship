@@ -37,7 +37,15 @@ const ProjectDeleteModal = ({ isOpen, onClose, project, onDeleteProject, isLoadi
               <p><strong>Year:</strong> {project.year}</p>
               <p><strong>Description:</strong> {project.projectDescription}</p>
               {project.students && (
-                <p><strong>Students:</strong> {project.students}</p>
+                <p>
+                  <strong>Students:</strong>{' '}
+                  {Array.isArray(project.students)
+                    ? project.students
+                        .filter(s => s && (s.name || s.srn))
+                        .map(s => `${s.name || ''}${s.srn ? ` (${s.srn})` : ''}`)
+                        .join(', ')
+                    : project.students}
+                </p>
               )}
             </div>
             <div className="warning-message">

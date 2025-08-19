@@ -6,6 +6,7 @@ bcrypt==4.2.0
 requests==2.32.3
 pdfminer.six==20231228
 gunicorn
+openpyxl==3.1.5
 
 # Optional: summarization dependencies are removed to speed up deploys.
 # If you need them, add back and unset DISABLE_SUMMARIZER.

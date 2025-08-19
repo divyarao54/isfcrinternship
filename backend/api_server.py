@@ -18,6 +18,9 @@ import threading
 import time
 import uuid
 from db_config import db_manager
+import io
+import csv
+from openpyxl import load_workbook
 
 load_dotenv()
 
@@ -762,12 +765,12 @@ def search_papers():
 
         final_results = unique_results[:max(1, limit)]
 
-        return jsonify({
-            'query': query,
+                return jsonify({
+                    'query': query,
             'total_results': len(final_results),
             'results': final_results
-        }), 200
-
+                }), 200
+            
     except Exception as error:
         return jsonify({'error': 'Error performing search', 'message': str(error)}), 500
 
@@ -1618,7 +1621,7 @@ def get_yearly_projects():
         
         # Get all projects sorted by year (descending) and creation date (descending)
         # Explicitly include _id field in the query
-        projects = list(projects_collection.find({}, {'_id': 1, 'year': 1, 'teacherName': 1, 'projectName': 1, 'projectDescription': 1, 'students': 1, 'createdAt': 1}).sort([
+        projects = list(projects_collection.find({}, {'_id': 1, 'year': 1, 'teacherName': 1, 'projectName': 1, 'projectDescription': 1, 'students': 1, 'createdAt': 1, 'report': 1, 'poster': 1}).sort([
             ('year', -1), 
             ('createdAt', -1)
         ]))
@@ -1652,6 +1655,144 @@ def get_yearly_projects():
     except Exception as error:
         return jsonify({'error': str(error)}), 500
 
+@app.route('/api/yearly-projects/bulk', methods=['POST'])
+def add_yearly_projects_bulk():
+    """Upload an Excel file and create multiple yearly projects grouped by group_id.
+
+    Expected columns: group_id, name, srn, mentor, project_title, project_description, year, report, poster
+    """
+    try:
+        if 'file' not in request.files:
+            return jsonify({'error': 'No file uploaded'}), 400
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'error': 'Empty filename'}), 400
+
+        # Read workbook in memory
+        data = file.read()
+        wb = load_workbook(filename=io.BytesIO(data), read_only=True, data_only=True)
+        ws = wb.active
+
+        # Extract headers
+        rows = list(ws.iter_rows(values_only=True))
+        if not rows:
+            return jsonify({'error': 'Empty sheet'}), 400
+        headers = [str(h).strip().lower() if h is not None else '' for h in rows[0]]
+
+        required = ['group_id', 'name', 'srn', 'mentor', 'project_title', 'project_description', 'year', 'report', 'poster']
+        for req in required:
+            if req not in headers:
+                return jsonify({'error': f'Missing required column: {req}'}), 400
+
+        idx = {h: headers.index(h) for h in required}
+
+        # Group rows by group_id
+        groups = {}
+        for r in rows[1:]:
+            if r is None:
+                continue
+            group_id = str(r[idx['group_id']]).strip() if r[idx['group_id']] is not None else ''
+            if not group_id:
+                # Skip rows without a group id
+                continue
+            group = groups.setdefault(group_id, {
+                'mentor': '',
+                'project_title': '',
+                'project_description': '',
+                'year': '',
+                'report': '',
+                'poster': '',
+                'students': []
+            })
+
+            mentor = (str(r[idx['mentor']]) if r[idx['mentor']] is not None else '').strip()
+            project_title = (str(r[idx['project_title']]) if r[idx['project_title']] is not None else '').strip()
+            project_description = (str(r[idx['project_description']]) if r[idx['project_description']] is not None else '').strip()
+            year_val = r[idx['year']]
+            try:
+                year = int(str(year_val).strip()) if year_val is not None else ''
+            except Exception:
+                year = ''
+            report = (str(r[idx['report']]) if r[idx['report']] is not None else '').strip()
+            poster = (str(r[idx['poster']]) if r[idx['poster']] is not None else '').strip()
+            name = (str(r[idx['name']]) if r[idx['name']] is not None else '').strip()
+            srn = (str(r[idx['srn']]) if r[idx['srn']] is not None else '').strip()
+
+            # Set shared fields if present (prefer first non-empty)
+            if project_title and not group['project_title']:
+                group['project_title'] = project_title
+            if mentor and not group['mentor']:
+                group['mentor'] = mentor
+            if project_description and not group['project_description']:
+                group['project_description'] = project_description
+            if year and not group['year']:
+                group['year'] = year
+            if report and not group['report']:
+                group['report'] = report
+            if poster and not group['poster']:
+                group['poster'] = poster
+
+            if name or srn:
+                group['students'].append({'name': name, 'srn': srn})
+
+        # Persist projects
+        from db_config import get_collection
+        projects_collection = get_collection('yearly_projects')
+
+        # Create unique index (no-op if exists)
+        try:
+            projects_collection.create_index([
+                ('year', 1), ('teacherName', 1), ('projectName', 1)
+            ], unique=True)
+        except Exception:
+            pass
+
+        inserted = []
+        skipped = []
+        preview = []
+        for gid, g in groups.items():
+            doc = {
+                'year': g['year'] if isinstance(g['year'], int) else int(str(g['year']) or 0),
+                'teacherName': g['mentor'],
+                'projectName': g['project_title'],
+                'projectDescription': g['project_description'],
+                'students': g['students'],
+                'report': g['report'],
+                'poster': g['poster'],
+                'createdAt': datetime.utcnow().isoformat(),
+                'groupId': gid
+            }
+            # Skip duplicates
+            existing = projects_collection.find_one({
+                'year': doc['year'],
+                'teacherName': doc['teacherName'],
+                'projectName': doc['projectName']
+            })
+            if existing:
+                skipped.append({'groupId': gid, 'reason': 'duplicate', 'projectId': str(existing.get('_id'))})
+                continue
+            res = projects_collection.insert_one(doc)
+            inserted.append(str(res.inserted_id))
+            preview.append({
+                '_id': str(res.inserted_id),
+                'year': doc['year'],
+                'teacherName': doc['teacherName'],
+                'projectName': doc['projectName'],
+                'projectDescription': doc['projectDescription'],
+                'students': doc['students'],
+                'report': doc['report'],
+                'poster': doc['poster']
+            })
+
+        return jsonify({
+            'success': True,
+            'inserted': inserted,
+            'skipped': skipped,
+            'preview': preview,
+            'groups': len(groups)
+        }), 201
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 @app.route('/api/yearly-projects', methods=['POST'])
 def add_yearly_project():
     """Add a new yearly project"""
@@ -1677,17 +1818,30 @@ def add_yearly_project():
             'createdAt': datetime.utcnow().isoformat()
         }
         
+        # Ensure a unique index to help prevent duplicates (year, teacherName, projectName)
+        try:
+            projects_collection.create_index([
+                ('year', 1), ('teacherName', 1), ('projectName', 1)
+            ], unique=True)
+        except Exception:
+            pass
+
+        # Prevent duplicates
+        existing = projects_collection.find_one({
+            'year': project['year'],
+            'teacherName': project['teacherName'],
+            'projectName': project['projectName']
+        })
+        if existing:
+            return jsonify({'error': 'Duplicate project exists', 'projectId': str(existing.get('_id'))}), 409
+        
         # Insert the project
         result = projects_collection.insert_one(project)
-        
-        if result.inserted_id:
             return jsonify({
                 'success': True,
                 'message': 'Project added successfully',
                 'projectId': str(result.inserted_id)
             }), 201
-        else:
-            return jsonify({'error': 'Failed to add project'}), 500
             
     except Exception as error:
         return jsonify({'error': str(error)}), 500

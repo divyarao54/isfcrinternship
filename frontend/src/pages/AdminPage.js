@@ -4,6 +4,43 @@ import "../styles/admin.css";
 import DeleteModal from '../components/DeleteModal';
 import PublicationTypeSelector from '../components/PublicationTypeSelector';
 import PublicationForm from '../components/PatentForm';
+import AwardModal from '../components/AwardModal';
+import { useState as useLocalState } from 'react';
+
+const AwardForm = ({ onClose }) => {
+  const [awardName, setAwardName] = useLocalState('');
+  const [imageUrl, setImageUrl] = useLocalState('');
+  const [loading, setLoading] = useLocalState(false);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      setLoading(true);
+      await axios.post('http://localhost:5000/api/awards', { awardName, imageUrl }, { headers: { 'Content-Type': 'application/json' } });
+      alert('Award added successfully');
+      onClose();
+    } catch (err) {
+      alert(err?.response?.data?.error || 'Failed to add award');
+    } finally {
+      setLoading(false);
+    }
+  };
+  return (
+    <form onSubmit={handleSubmit} className="add-project-form">
+      <div className="form-group">
+        <label> Award Name *</label>
+        <input value={awardName} onChange={(e) => setAwardName(e.target.value)} required />
+      </div>
+      <div className="form-group">
+        <label> Image URL *</label>
+        <input value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} required />
+      </div>
+      <div className="form-actions">
+        <button type="button" className="cancel-btn" onClick={onClose}>Cancel</button>
+        <button type="submit" className="submit-btn" disabled={loading}>{loading ? 'Saving...' : 'Save'}</button>
+      </div>
+    </form>
+  );
+};
 
 const AdminPage = () => {
   const [scholarLink, setScholarLink] = useState("");
@@ -63,6 +100,14 @@ const AdminPage = () => {
   const [addPubTeacherName, setAddPubTeacherName] = useState("");
   const [customTeacherName, setCustomTeacherName] = useState("");
   const [addPubSuccess, setAddPubSuccess] = useState("");
+  // Project/Award add state
+  const [showAddMenu, setShowAddMenu] = useState(false);
+  const [showBulkModal, setShowBulkModal] = useState(false);
+  const [bulkFile, setBulkFile] = useState(null);
+  const [bulkUploading, setBulkUploading] = useState(false);
+  const [bulkPreview, setBulkPreview] = useState([]);
+  const [showAwardModal, setShowAwardModal] = useState(false);
+  const [isUploadingAward, setIsUploadingAward] = useState(false);
 
   // Session timeout functionality (single timeout via refs)
   const timeoutRef = useRef(null);
@@ -1039,17 +1084,28 @@ const AdminPage = () => {
             onFocus={handleAdminActivity}
             className="admin-input admin-input-wide"
           />
-          <div className="admin-buttons">
+          <div className="admin-buttons" style={{zIndex: '10'}}>
             <button onClick={() => { handleScrape(); handleAdminActivity(); }} style={{ background: '#182745', color: 'white' }}>Scrape</button>
             <button onClick={() => { openDeleteModal(); handleAdminActivity(); }} style={{ background: '#182745', color: 'white' }}>Delete</button>
             {/* Check ES Status removed */}
             <button onClick={() => { handleUpdateAll(); handleAdminActivity(); }} style={{ background: '#182745', color: 'white' }}>Update All</button>
+            {/* Add actions */}
+            <div className="add-actions" style={{ display: 'inline-block', marginLeft: 12 }}>
+              <button className="add-main-btn" onClick={() => setShowAddMenu(v => !v)}>+ Add</button>
+              {showAddMenu && (
+                <div className="add-menu">
+                  <button style={{zIndex: '10', position: 'relative'}} onClick={() => { setShowAddMenu(false); setShowTypeSelector(true); }}>+ Add Project (Individual)</button>
+                  <button style={{zIndex: '10', position: 'relative'}} onClick={() => { setShowAddMenu(false); setShowBulkModal(true); }}>+ Upload Excel (Bulk)</button>
+                  <button style={{zIndex: '10', position: 'relative'}}onClick={() => { setShowAddMenu(false); setShowAwardModal(true); }}>+ Add Award</button>
+                </div>
+              )}
+            </div>
           </div>
-          <div className="admin-account-buttons">
+          <div className="admin-account-buttons" style={{zIndex: '9'}}>
             <button onClick={() => { setShowChangePassword(true); handleAdminActivity(); }} style={{ marginRight: 16, background: '#182745', color: 'white' }}>
               Change Password
             </button>
-            <button onClick={handleLogout} style={{ background: '#182745', color: 'white' }}>Logout</button>
+            <button onClick={handleLogout} style={{ background: '#182745', color: 'white', zIndex: '9' }}>Logout</button>
           </div>
           {status && <p className="status-text">{status}</p>}
           {addPubSuccess && <div style={{ color: 'green', marginTop: 8, fontSize: '0.9rem' }}>{addPubSuccess}</div>}
@@ -1182,6 +1238,60 @@ const AdminPage = () => {
           )}
 
           {/* Publication Form */}
+          {/* Bulk Upload Modal */}
+          {showBulkModal && (
+            <div className="modal-overlay" onClick={() => setShowBulkModal(false)}>
+              <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                <div className="modal-header">
+                  <h2>Bulk Upload Projects (Excel)</h2>
+                  <button className="close-btn" onClick={() => setShowBulkModal(false)}>×</button>
+                </div>
+                <div style={{ marginBottom: 12 }}>
+                  <p>Please upload an .xlsx file with columns: <b>group_id, name, srn, mentor, project_title, project_description, year, report, poster</b>.</p>
+                </div>
+                <input type="file" accept=".xlsx" onChange={(e) => setBulkFile(e.target.files?.[0] || null)} />
+                <div className="form-actions" style={{ marginTop: 16 }}>
+                  <button className="cancel-btn" onClick={() => { setShowBulkModal(false); setBulkFile(null); setBulkPreview([]); }}>Cancel</button>
+                  <button className="submit-btn" disabled={!bulkFile || bulkUploading} onClick={async () => {
+                    if (!bulkFile) return;
+                    try {
+                      setBulkUploading(true);
+                      const formData = new FormData();
+                      formData.append('file', bulkFile);
+                      const resp = await axios.post('http://localhost:5000/api/yearly-projects/bulk', formData, {
+                        headers: { 'Content-Type': 'multipart/form-data' }
+                      });
+                      if (resp.data && resp.data.success) {
+                        setBulkPreview(resp.data.preview || []);
+                        alert(`Imported ${(resp.data.inserted || []).length} group(s). Skipped ${(resp.data.skipped || []).length}.`);
+                      } else {
+                        alert('Import failed');
+                      }
+                    } catch (e) {
+                      alert(e?.response?.data?.error || e.message || 'Import failed');
+                    } finally {
+                      setBulkUploading(false);
+                    }
+                  }}>{bulkUploading ? 'Uploading...' : 'Upload'}</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Award Modal (reuse existing component) */}
+          {showAwardModal && (
+            <div className="modal-overlay" onClick={() => setShowAwardModal(false)}>
+              <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                <div className="modal-header">
+                  <h2>Add Award</h2>
+                  <button className="close-btn" onClick={() => setShowAwardModal(false)}>×</button>
+                </div>
+                <div style={{ padding: 20 }}>
+                  <AwardForm onClose={() => setShowAwardModal(false)} />
+                </div>
+              </div>
+            </div>
+          )}
           {selectedType && selectedType !== '__show_type_selector__' && (
             <PublicationForm
               isOpen={true}

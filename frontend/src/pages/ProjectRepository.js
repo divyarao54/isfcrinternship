@@ -2,17 +2,21 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import '../styles/ProjectRepository.css';
 import ProjectDeleteModal from '../components/ProjectDeleteModal';
-import AwardModal from '../components/AwardModal';
+// Award add has moved to Admin page
 
 const ProjectRepository = () => {
   const [projects, setProjects] = useState([]);
+  const [isAdmin, setIsAdmin] = useState(() => localStorage.getItem('isAdminLoggedIn') === 'true');
   const [teachers, setTeachers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [showAddMenu, setShowAddMenu] = useState(false);
-  const [showAwardModal, setShowAwardModal] = useState(false);
-  const [isUploadingAward, setIsUploadingAward] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false); // will be hidden for non-admin view
+  const [showAddMenu, setShowAddMenu] = useState(false); // removed from UI
+  const [showBulkModal, setShowBulkModal] = useState(false);
+  const [bulkFile, setBulkFile] = useState(null);
+  const [bulkUploading, setBulkUploading] = useState(false);
+  const [bulkPreview, setBulkPreview] = useState([]);
+  // Award modal moved to Admin page
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -26,6 +30,10 @@ const ProjectRepository = () => {
   useEffect(() => {
     fetchProjects();
     fetchTeachers();
+    // Listen for admin login status changes
+    const handler = () => setIsAdmin(localStorage.getItem('isAdminLoggedIn') === 'true');
+    window.addEventListener('storage', handler);
+    return () => window.removeEventListener('storage', handler);
   }, []);
 
   const fetchProjects = async () => {
@@ -127,34 +135,12 @@ const ProjectRepository = () => {
     setShowAddForm(false);
   };
 
-  const openAddMenu = () => setShowAddMenu(prev => !prev);
-  const openAddProject = () => { setShowAddMenu(false); setShowAddForm(true); };
-  const openAddAward = () => { setShowAddMenu(false); setShowAwardModal(true); };
-  const closeAwardModal = () => setShowAwardModal(false);
+  // Add actions moved to Admin page
+  const openAddMenu = () => {};
+  const openAddProject = () => {};
+  const openAddBulk = () => {};
 
-  const handleAddAward = async (awardName, imageUrl) => {
-    try {
-      setIsUploadingAward(true);
-      const awardData = {
-        awardName: awardName,
-        imageUrl: imageUrl
-      };
-      const resp = await axios.post('http://localhost:5000/api/awards', awardData, {
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-      if (resp.data && resp.data.success) {
-        alert('Award added successfully');
-        setShowAwardModal(false);
-      }
-    } catch (e) {
-      console.error('Failed to add award', e);
-      alert('Failed to add award');
-    } finally {
-      setIsUploadingAward(false);
-    }
-  };
+  // Award add moved to Admin page
 
   const handleDeleteProject = async (project) => {
     try {
@@ -209,15 +195,7 @@ const ProjectRepository = () => {
     <div className="project-repository-container">
       <div className="project-repository-header">
         <h1>Project Repository</h1>
-        <div className="add-actions">
-          <button className="add-main-btn" onClick={openAddMenu}>+ Add</button>
-          {showAddMenu && (
-            <div className="add-menu">
-              <button onClick={openAddProject}>+ Add Project</button>
-              <button onClick={openAddAward}>+ Add Award</button>
-            </div>
-          )}
-        </div>
+        {/* Add actions moved to Admin page */}
       </div>
 
       {error && (
@@ -317,6 +295,78 @@ const ProjectRepository = () => {
         </div>
       )}
 
+      {/* Bulk Upload Modal */}
+      {showBulkModal && (
+        <div className="modal-overlay" onClick={() => setShowBulkModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Bulk Upload Projects (Excel)</h2>
+              <button className="close-btn" onClick={() => setShowBulkModal(false)}>×</button>
+            </div>
+            <div style={{ marginBottom: 12 }}>
+              <p>Please upload an .xlsx file with columns: <b>group_id, name, srn, mentor, project_title, project_description, year, report, poster</b>.</p>
+            </div>
+            <input
+              type="file"
+              accept=".xlsx"
+              onChange={(e) => setBulkFile(e.target.files?.[0] || null)}
+            />
+            <div className="form-actions" style={{ marginTop: 16 }}>
+              <button className="cancel-btn" onClick={() => { setShowBulkModal(false); setBulkFile(null); setBulkPreview([]); }}>Cancel</button>
+              <button className="submit-btn" disabled={!bulkFile || bulkUploading} onClick={async () => {
+                if (!bulkFile) return;
+                try {
+                  setBulkUploading(true);
+                  const formData = new FormData();
+                  formData.append('file', bulkFile);
+                  const resp = await axios.post('http://localhost:5000/api/yearly-projects/bulk', formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                  });
+                  if (resp.data && resp.data.success) {
+                    setBulkPreview(resp.data.preview || []);
+                    // Refresh list
+                    fetchProjects();
+                    // Expand all years found
+                    const years = new Set([ ...expandedYears, ...((resp.data.preview || []).map(p => p.year)) ]);
+                    setExpandedYears(years);
+                    const skipped = (resp.data.skipped || []).length;
+                    const inserted = (resp.data.inserted || []).length;
+                    alert(`Imported ${inserted} group(s). Skipped ${skipped} duplicate group(s).`);
+                  } else {
+                    alert('Import failed');
+                  }
+                } catch (e) {
+                  alert(e?.response?.data?.error || e.message || 'Import failed');
+                } finally {
+                  setBulkUploading(false);
+                }
+              }}>{bulkUploading ? 'Uploading...' : 'Upload'}</button>
+            </div>
+
+            {bulkPreview.length > 0 && (
+              <div style={{ marginTop: 16 }}>
+                <h3>Preview</h3>
+                {bulkPreview.map((item, idx) => (
+                  <div key={idx} className="project-card" style={{ marginBottom: 8 }}>
+                    <div className="project-header">
+                      <h4 className="project-title">{item.projectName}</h4>
+                      <span className="project-teacher">{item.teacherName}</span>
+                    </div>
+                    <p className="project-description">{item.projectDescription}</p>
+                    {Array.isArray(item.students) && item.students.length > 0 && (
+                      <div className="project-students">
+                        <strong>Students:</strong> {item.students.map(s => `${s.name} (${s.srn})`).join(', ')}
+                      </div>
+                    )}
+                    {/* Do not show report/poster links in preview */}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Projects Display */}
       <div className="projects-section">
         <h2>Projects by Year</h2>
@@ -353,20 +403,38 @@ const ProjectRepository = () => {
                         <p className="project-description">{project.projectDescription}</p>
                         {project.students && (
                           <div className="project-students">
-                            <strong>Students:</strong> {project.students}
+                            <strong>Students:</strong>{' '}
+                            {Array.isArray(project.students)
+                              ? project.students
+                                  .filter(s => s && (s.name || s.srn))
+                                  .map(s => `${s.name || ''}${s.srn ? ` (${s.srn})` : ''}`)
+                                  .join(', ')
+                              : project.students}
+                          </div>
+                        )}
+                        {(project.report || project.poster) && (
+                          <div className="project-students" style={{ marginTop: 6 }}>
+                            {project.report && (
+                              <a href={project.report} target="_blank" rel="noreferrer" style={{ textDecoration: 'underline', marginRight: 12 }}>report</a>
+                            )}
+                            {project.poster && (
+                              <a href={project.poster} target="_blank" rel="noreferrer" style={{ textDecoration: 'underline' }}>poster</a>
+                            )}
                           </div>
                         )}
                         <div className="project-meta">
                           <span className="project-date">
                             Added: {new Date(project.createdAt).toLocaleDateString()}
                           </span>
-                          <button 
-                            className="delete-project-btn"
-                            onClick={() => openDeleteModal(project)}
-                            title="Delete Project"
-                          >
-                            🗑️ Delete
-                          </button>
+                          {isAdmin && (
+                            <button 
+                              className="delete-project-btn"
+                              onClick={() => openDeleteModal(project)}
+                              title="Delete Project"
+                            >
+                              🗑️ Delete
+                            </button>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -386,8 +454,7 @@ const ProjectRepository = () => {
         onDeleteProject={handleDeleteProject}
         isLoading={isDeleting}
       />
-      {/* Award Modal */}
-      <AwardModal isOpen={showAwardModal} onClose={closeAwardModal} onSubmit={handleAddAward} isUploading={isUploadingAward} />
+      {/* Award add moved to Admin page */}
     </div>
   );
 };
