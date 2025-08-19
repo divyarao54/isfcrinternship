@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+const API_BASE = process.env.REACT_APP_API_URL || '';
 import '../styles/ProjectRepository.css';
 import ProjectDeleteModal from '../components/ProjectDeleteModal';
 // Award add has moved to Admin page
@@ -39,7 +40,7 @@ const ProjectRepository = () => {
   const fetchProjects = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:5000/api/yearly-projects');
+      const response = await axios.get(`${API_BASE}/api/yearly-projects`);
       console.log('Fetched projects response:', response.data);
       setProjects(response.data.projects || []);
       setError('');
@@ -53,7 +54,7 @@ const ProjectRepository = () => {
 
   const fetchTeachers = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/teachers');
+      const response = await axios.get(`${API_BASE}/teachers`);
       setTeachers(response.data.teachers || []);
     } catch (err) {
       console.error('Error fetching teachers:', err);
@@ -78,7 +79,7 @@ const ProjectRepository = () => {
         createdAt: new Date().toISOString()
       };
 
-      const response = await axios.post('http://localhost:5000/api/yearly-projects', projectData);
+      const response = await axios.post(`${API_BASE}/api/yearly-projects`, projectData);
       
       if (response.data.success) {
         // Reset form
@@ -153,7 +154,7 @@ const ProjectRepository = () => {
         return;
       }
       
-      const response = await axios.delete(`http://localhost:5000/api/yearly-projects/${project._id}`);
+      const response = await axios.delete(`${API_BASE}/api/yearly-projects/${project._id}`);
       
       if (response.data.success) {
         // Refresh projects list
@@ -319,7 +320,8 @@ const ProjectRepository = () => {
                   setBulkUploading(true);
                   const formData = new FormData();
                   formData.append('file', bulkFile);
-                  const resp = await axios.post('http://localhost:5000/api/yearly-projects/bulk', formData, {
+                  const API_BASE = process.env.REACT_APP_API_URL || '';
+                  const resp = await axios.post(`${API_BASE}/api/yearly-projects/bulk`, formData, {
                     headers: { 'Content-Type': 'multipart/form-data' }
                   });
                   if (resp.data && resp.data.success) {

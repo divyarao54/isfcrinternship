@@ -765,11 +765,11 @@ def search_papers():
 
         final_results = unique_results[:max(1, limit)]
 
-                return jsonify({
-                    'query': query,
+        return jsonify({
+            'query': query,
             'total_results': len(final_results),
             'results': final_results
-                }), 200
+        }), 200
             
     except Exception as error:
         return jsonify({'error': 'Error performing search', 'message': str(error)}), 500

@@ -15,7 +15,8 @@ const AwardForm = ({ onClose }) => {
     e.preventDefault();
     try {
       setLoading(true);
-      await axios.post('http://localhost:5000/api/awards', { awardName, imageUrl }, { headers: { 'Content-Type': 'application/json' } });
+      const API_BASE = process.env.REACT_APP_API_URL || '';
+      await axios.post(`${API_BASE}/api/awards`, { awardName, imageUrl }, { headers: { 'Content-Type': 'application/json' } });
       alert('Award added successfully');
       onClose();
     } catch (err) {
@@ -268,7 +269,8 @@ const AdminPage = () => {
   const fetchTeachers = async () => {
     setIsLoadingTeachers(true);
     try {
-      const res = await axios.get('http://localhost:5000/teachers');
+      const API_BASE = process.env.REACT_APP_API_URL || '';
+      const res = await axios.get(`${API_BASE}/teachers`);
       setTeachers(res.data.teachers || []);
     } catch (err) {
       setTeachers([]);
@@ -281,7 +283,8 @@ const AdminPage = () => {
     setSelectedTeacher(teacher);
     setIsLoadingPublications(true);
     try {
-      const res = await axios.get(`http://localhost:5000/teachers/${encodeURIComponent(teacher.name)}/publications`);
+      const API_BASE = process.env.REACT_APP_API_URL || '';
+      const res = await axios.get(`${API_BASE}/teachers/${encodeURIComponent(teacher.name)}/publications`);
       setPublications(res.data.publications || []);
     } catch (err) {
       setPublications([]);
@@ -295,7 +298,8 @@ const AdminPage = () => {
     try {
       setIsOperationActive(true); // Set operation as active
       pauseSessionTimeout(); // Pause session timeout during delete
-      await axios.delete(`http://localhost:5000/teachers/${encodeURIComponent(teacher.name)}`);
+      const API_BASE = process.env.REACT_APP_API_URL || '';
+      await axios.delete(`${API_BASE}/teachers/${encodeURIComponent(teacher.name)}`);
       setTeachers(teachers.filter(t => t._id !== teacher._id));
       if (selectedTeacher && selectedTeacher._id === teacher._id) {
         setSelectedTeacher(null);
@@ -315,7 +319,8 @@ const AdminPage = () => {
     try {
       setIsOperationActive(true); // Set operation as active
       pauseSessionTimeout(); // Pause session timeout during delete
-      await axios.delete(`http://localhost:5000/teachers/${encodeURIComponent(selectedTeacher.name)}/publications/${pub._id}`);
+      const API_BASE = process.env.REACT_APP_API_URL || '';
+      await axios.delete(`${API_BASE}/teachers/${encodeURIComponent(selectedTeacher.name)}/publications/${pub._id}`);
       setPublications(publications.filter(p => p._id !== pub._id));
     } catch (err) {
       alert('Failed to delete publication.');
@@ -391,7 +396,8 @@ const AdminPage = () => {
 
   const checkAdminStatus = async () => {
     try {
-      const response = await axios.get("http://localhost:5000/admin/status");
+      const API_BASE = process.env.REACT_APP_API_URL || '';
+      const response = await axios.get(`${API_BASE}/admin/status`);
       setAdminExists(response.data.admin_exists);
     } catch (error) {
       console.error("Error checking admin status:", error);
@@ -404,7 +410,8 @@ const AdminPage = () => {
     e.preventDefault();
     setLoginError("");
     try {
-      const response = await axios.post("http://localhost:5000/admin/login", {
+      const API_BASE = process.env.REACT_APP_API_URL || '';
+      const response = await axios.post(`${API_BASE}/admin/login`, {
         username: loginUsername,
         password: loginPassword,
       });
@@ -472,7 +479,8 @@ const AdminPage = () => {
   // Check task status
   const checkTaskStatus = async (taskId) => {
     try {
-      const response = await axios.get(`http://localhost:5000/tasks/${taskId}/status`);
+      const API_BASE = process.env.REACT_APP_API_URL || '';
+      const response = await axios.get(`${API_BASE}/tasks/${taskId}/status`);
       const status = response.data;
       setTaskStatuses(prev => ({
         ...prev,
@@ -496,7 +504,8 @@ const AdminPage = () => {
       setIsOperationActive(true); // Set operation as active
       pauseSessionTimeout(); // Pause session timeout during scraping
       setStatus("Starting scraping in background...");
-      const response = await axios.post("http://localhost:5000/admin/scrape", {
+      const API_BASE = process.env.REACT_APP_API_URL || '';
+      const response = await axios.post(`${API_BASE}/admin/scrape`, {
         profileUrl: scholarLink,
       });
       
@@ -523,7 +532,8 @@ const AdminPage = () => {
     try {
       setIsOperationActive(true); // Set operation as active
       pauseSessionTimeout(); // Pause session timeout during update all
-      const response = await axios.post("http://localhost:5000/admin/update-all");
+      const API_BASE = process.env.REACT_APP_API_URL || '';
+      const response = await axios.post(`${API_BASE}/admin/update-all`);
       
       if (response.data.task_id) {
         const taskId = response.data.task_id;
@@ -590,7 +600,8 @@ const AdminPage = () => {
       setIsOperationActive(true); // Set operation as active
       pauseSessionTimeout(); // Pause session timeout during update
       setStatus("Updating...");
-      const response = await axios.put("http://localhost:5000/admin/update", {
+      const API_BASE = process.env.REACT_APP_API_URL || '';
+      const response = await axios.put(`${API_BASE}/admin/update`, {
         profileUrl: scholarLink,
       });
       setStatus(`🔁 Updated: ${response.data.message}`);
@@ -608,7 +619,8 @@ const AdminPage = () => {
       setIsOperationActive(true); // Set operation as active
       pauseSessionTimeout(); // Pause session timeout during delete
       setStatus("Deleting...");
-      const response = await axios.delete("http://localhost:5000/admin/delete", {
+      const API_BASE = process.env.REACT_APP_API_URL || '';
+      const response = await axios.delete(`${API_BASE}/admin/delete`, {
         data: { profileUrl: scholarLink },
       });
       setStatus(`🗑️ Deleted: ${response.data.message}`);
@@ -628,7 +640,8 @@ const AdminPage = () => {
       return;
     }
     try {
-      const response = await axios.post("http://localhost:5000/admin/change_password", {
+      const API_BASE = process.env.REACT_APP_API_URL || '';
+      const response = await axios.post(`${API_BASE}/admin/change_password`, {
         username: loginUsername || "Nihal", // Use the logged-in username
         oldPassword,
         newPassword,
@@ -798,7 +811,8 @@ const AdminPage = () => {
             return;
           }
           try {
-            const res = await axios.post("http://localhost:5000/admin/signup", {
+            const API_BASE = process.env.REACT_APP_API_URL || '';
+            const res = await axios.post(`${API_BASE}/admin/signup`, {
               username: signupUsername,
               password: signupPassword,
               answer1: signupAnswer1,
@@ -927,7 +941,8 @@ const AdminPage = () => {
             return;
           }
           try {
-            const res = await axios.post("http://localhost:5000/admin/forgot_password", {
+            const API_BASE = process.env.REACT_APP_API_URL || '';
+            const res = await axios.post(`${API_BASE}/admin/forgot_password`, {
               username: forgotUsername,
               answer1: forgotAnswer1,
               answer2: forgotAnswer2,
@@ -971,7 +986,8 @@ const AdminPage = () => {
             return;
           }
           try {
-            const res = await axios.post("http://localhost:5000/admin/reset_password", {
+            const API_BASE = process.env.REACT_APP_API_URL || '';
+            const res = await axios.post(`${API_BASE}/admin/reset_password`, {
               username: forgotUsername,
               newPassword: resetPassword,
             });
