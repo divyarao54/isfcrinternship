@@ -1837,11 +1837,11 @@ def add_yearly_project():
         
         # Insert the project
         result = projects_collection.insert_one(project)
-            return jsonify({
-                'success': True,
-                'message': 'Project added successfully',
-                'projectId': str(result.inserted_id)
-            }), 201
+        return jsonify({
+            'success': True,
+            'message': 'Project added successfully',
+            'projectId': str(result.inserted_id)
+        }), 201
             
     except Exception as error:
         return jsonify({'error': str(error)}), 500
