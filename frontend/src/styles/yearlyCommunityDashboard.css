@@ -201,7 +201,40 @@
   letter-spacing: 0.5px;
 }
 
+.metric-bar-popup{
+    background: #fff; 
+    border-radius: 16; 
+    padding: 32; 
+    min-width: 900; 
+    min-height: 540;
+    max-width: 98vw; 
+    max-height: 90vh; 
+    box-shadow: 0 4px 24px rgba(0,0,0,0.15); 
+    position: relative; 
+    overflow: auto
+}
+
+.year-wise-popup{
+    background: white; 
+    border-radius: 16; 
+    padding: 32; 
+    min-width: 900; 
+    min-height: 540; 
+    max-width: 98vw; 
+    max-height: 90vh; 
+    box-shadow: 0 4px 24px rgba(0,0,0,0.15); 
+    position: relative; 
+    overflow: auto;
+}
+
 @media (max-width: 900px) {
+
+    .metric-bar-popup{
+        min-width: 98vw;
+    }
+    .year-wise-popup{
+        min-width: 98vw;
+    }
   .drilldown-publication-section {
     padding: 18px 6vw 18px 6vw;
     min-width: 0;

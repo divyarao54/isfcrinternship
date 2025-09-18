@@ -226,7 +226,7 @@ const MetricBarPopup = ({ open, metric, data, onClose, onBarClick }) => {
             position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
             background: 'rgba(0,0,0,0.4)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center'
         }}>
-            <div style={{ background: 'white', borderRadius: 16, padding: 32, minWidth: 900, minHeight: 540, maxWidth: '98vw', maxHeight: '90vh', boxShadow: '0 4px 24px rgba(0,0,0,0.15)', position: 'relative', overflow: 'auto' }}>
+            <div className="metric-bar-popup">
                 <button onClick={onClose} style={{ position: 'absolute', top: 16,color:'black', background:'white', right: 16, fontSize: 18, border: 'none', borderRadius: 4, padding: '4px 12px', cursor: 'pointer' }}>X</button>
                 <h2 style={{ textAlign: 'center', marginBottom: 24 }}>{metricMap[metric].label} by Teacher</h2>
                 <ResponsiveContainer width="100%" height={420}>
@@ -255,7 +255,7 @@ const YearWisePopup = ({ open, teacher, metric, onClose, yearData }) => {
             position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
             background: 'rgba(0,0,0,0.4)', zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center'
         }}>
-            <div style={{ background: 'white', borderRadius: 16, padding: 32, minWidth: 900, minHeight: 540, maxWidth: '98vw', maxHeight: '90vh', boxShadow: '0 4px 24px rgba(0,0,0,0.15)', position: 'relative', overflow: 'auto' }}>
+            <div className="year-wise-popup" >
                 <button onClick={onClose} style={{ position: 'absolute', top: 16, right: 16, fontSize: 18, background: 'white',color:'black', border: 'none', borderRadius: 4, padding: '4px 12px', cursor: 'pointer' }}>X</button>
                 <h2 style={{ textAlign: 'center', marginBottom: 24 }}>{teacher} - {metricMap[metric].label}</h2>
                 <ResponsiveContainer width="100%" height={420}>
