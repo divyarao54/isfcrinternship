@@ -189,7 +189,7 @@
     }
     
     .teacher-image {
-        height: 120px;
+        height: auto;
     }
     
     .teacher-info {
