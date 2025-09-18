@@ -47,11 +47,11 @@ const Home = () => {
     // Removed unused handlers for patent UI
 
     return (
-        <div className="home-container" style={{backgroundColor: '#f4f6f8', width: '1500px', marginLeft: '-10px', overflow: 'hidden'}}>
+        <div className="home-container" style={{backgroundColor: '#f4f6f8', width: '100%', marginLeft: '-10px', overflow: 'hidden'}}>
             {/*<Navbar />*/}
             {/* Dashboard at the top */}
-            <div className="dashboard-container" style={{display: 'flex', flexDirection: 'row'}}>
-                <div className="dashboard-item">
+            <div className="dashboard-container" style={{display: 'flex', flexDirection: 'row', width: '100%'}}>
+                <div className="dashboard-item" style={{width: '100%'}}>
                     <YearlyCommunityDashboard />
                 </div>
             </div>

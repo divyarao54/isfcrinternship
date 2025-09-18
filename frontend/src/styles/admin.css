@@ -323,6 +323,7 @@
 }
 
 .modal-content {
+  z-index: 10;
   padding: 20px;
   overflow-y: auto;
   flex: 1;
@@ -481,10 +482,25 @@
 }
 
 /* Responsive Design */
-@media (max-width: 768px) {
+@media (max-width: 900px) {
+  .admin-container h2{
+    padding-top: 20px;
+    font-size: 1.8rem;
+  }
+
+  .admin-input {
+    font-size: 1.1rem;
+  }
+  .admin-input.admin-input-wide{
+    font-size: 1.1rem;
+  }
+
   .admin-buttons {
     flex-direction: column;
     align-items: center;
+  }
+  .admin-buttons button {
+    font-size: 1.0rem;
   }
   
   .delete-dropdown {

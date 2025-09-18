@@ -15,7 +15,7 @@ const AwardForm = ({ onClose }) => {
     e.preventDefault();
     try {
       setLoading(true);
-      const API_BASE = process.env.REACT_APP_API_URL || '';
+      const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000';
       await axios.post(`${API_BASE}/api/awards`, { awardName, imageUrl }, { headers: { 'Content-Type': 'application/json' } });
       alert('Award added successfully');
       onClose();
@@ -34,6 +34,77 @@ const AwardForm = ({ onClose }) => {
       <div className="form-group">
         <label> Image URL *</label>
         <input value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} required />
+      </div>
+      <div className="form-actions">
+        <button type="button" className="cancel-btn" onClick={onClose}>Cancel</button>
+        <button type="submit" className="submit-btn" disabled={loading}>{loading ? 'Saving...' : 'Save'}</button>
+      </div>
+    </form>
+  );
+};
+
+const FundingForm = ({ onClose }) => {
+  const [teacherConsultant, setTeacherConsultant] = useLocalState('');
+  const [consultantAgency, setConsultantAgency] = useLocalState('');
+  const [sponsoringAgency, setSponsoringAgency] = useLocalState('');
+  const [year, setYear] = useLocalState('');
+  const [revenue, setRevenue] = useLocalState('');
+  const [status, setStatus] = useLocalState('');
+  const [imageUrl, setImageUrl] = useLocalState('');
+  const [loading, setLoading] = useLocalState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      setLoading(true);
+      const API_BASE = process.env.REACT_APP_API_URL || '';
+      await axios.post(`${API_BASE}/api/funds`, {
+        teacherConsultant,
+        consultantAgency,
+        sponsoringAgency,
+        year,
+        revenue,
+        status,
+        imageUrl: imageUrl || undefined
+      }, { headers: { 'Content-Type': 'application/json' } });
+      alert('Funding record added successfully');
+      onClose();
+    } catch (err) {
+      alert(err?.response?.data?.error || 'Failed to add funding record');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="add-project-form">
+      <div className="form-group">
+        <label>Teacher Consultant *</label>
+        <input value={teacherConsultant} onChange={(e) => setTeacherConsultant(e.target.value)} required />
+      </div>
+      <div className="form-group">
+        <label>Name of Consultant Agency *</label>
+        <input value={consultantAgency} onChange={(e) => setConsultantAgency(e.target.value)} required />
+      </div>
+      <div className="form-group">
+        <label>Consulting or Sponsoring Agency *</label>
+        <input value={sponsoringAgency} onChange={(e) => setSponsoringAgency(e.target.value)} required />
+      </div>
+      <div className="form-group">
+        <label>Year *</label>
+        <input type="number" value={year} onChange={(e) => setYear(e.target.value)} required />
+      </div>
+      <div className="form-group">
+        <label>Generated Revenue (optional)</label>
+        <input type="number" step="0.01" value={revenue} onChange={(e) => setRevenue(e.target.value)} />
+      </div>
+      <div className="form-group">
+        <label>Project Status *</label>
+        <input value={status} onChange={(e) => setStatus(e.target.value)} required />
+      </div>
+      <div className="form-group">
+        <label>Image URL (optional)</label>
+        <input value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://..." />
       </div>
       <div className="form-actions">
         <button type="button" className="cancel-btn" onClick={onClose}>Cancel</button>
@@ -109,6 +180,7 @@ const AdminPage = () => {
   const [bulkPreview, setBulkPreview] = useState([]);
   const [showAwardModal, setShowAwardModal] = useState(false);
   const [isUploadingAward, setIsUploadingAward] = useState(false);
+  const [showFundingModal, setShowFundingModal] = useState(false);
 
   // Session timeout functionality (single timeout via refs)
   const timeoutRef = useRef(null);
@@ -1107,12 +1179,13 @@ const AdminPage = () => {
             <button onClick={() => { handleUpdateAll(); handleAdminActivity(); }} style={{ background: '#182745', color: 'white' }}>Update All</button>
             {/* Add actions */}
             <div className="add-actions" style={{ display: 'inline-block', marginLeft: 12 }}>
-              <button className="add-main-btn" onClick={() => setShowAddMenu(v => !v)}>+ Add</button>
+              <button className="add-main-btn" onClick={() => setShowAddMenu(v => !v)} style={{backgroundColor: '#182745', color: 'white'}}>+ Add</button>
               {showAddMenu && (
                 <div className="add-menu">
                   <button style={{zIndex: '10', position: 'relative'}} onClick={() => { setShowAddMenu(false); setShowTypeSelector(true); }}>+ Add Project (Individual)</button>
                   <button style={{zIndex: '10', position: 'relative'}} onClick={() => { setShowAddMenu(false); setShowBulkModal(true); }}>+ Upload Excel (Bulk)</button>
                   <button style={{zIndex: '10', position: 'relative'}}onClick={() => { setShowAddMenu(false); setShowAwardModal(true); }}>+ Add Award</button>
+                  <button style={{zIndex: '10', position: 'relative'}} onClick={() => { setShowAddMenu(false); setShowFundingModal(true); }}>+ Add Funding</button>
                 </div>
               )}
             </div>
@@ -1304,6 +1377,21 @@ const AdminPage = () => {
                 </div>
                 <div style={{ padding: 20 }}>
                   <AwardForm onClose={() => setShowAwardModal(false)} />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Funding Modal */}
+          {showFundingModal && (
+            <div className="modal-overlay" onClick={() => setShowFundingModal(false)}>
+              <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                <div className="modal-header">
+                  <h2>Add Funding / Consultancy</h2>
+                  <button className="close-btn" onClick={() => setShowFundingModal(false)}>×</button>
+                </div>
+                <div style={{ padding: 20 }}>
+                  <FundingForm onClose={() => setShowFundingModal(false)} />
                 </div>
               </div>
             </div>

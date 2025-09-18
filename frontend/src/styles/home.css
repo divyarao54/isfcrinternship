@@ -58,7 +58,7 @@
 
 /* Awards section */
 .awards-section {
-  width: 100%;
+  width: 100vh;
   padding: 24px 24px 8px 24px;
   margin: 0 auto 12px auto;
 }
@@ -72,11 +72,12 @@
   width: 100%;
 }
 
-.awards-grid {
+/*.awards-grid {
   display: grid;
+  max-width: 100%;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   gap: 16px;
-}
+}*/
 
 .award-card {
   background: #fff;

@@ -295,6 +295,14 @@ const YearlyCommunityDashboard = () => {
                 // Fetch all teachers
                 const teachersResp = await axios.get('http://localhost:5000/teachers');
                 const teachers = teachersResp.data.teachers || [];
+                // Fetch funds
+                let funds = [];
+                try {
+                    const fundsResp = await axios.get((process.env.REACT_APP_API_URL || '') + '/api/funds');
+                    funds = fundsResp.data.funds || [];
+                } catch (e) {
+                    // ignore
+                }
                 // For each teacher, fetch h-index, i10-index, and publication count
                 const teacherMetrics = await Promise.all(teachers.map(async (teacher) => {
                     // Get h-index and i10-index from citations collection
@@ -321,7 +329,7 @@ const YearlyCommunityDashboard = () => {
                         publications
                     };
                 }));
-                setDonutData({ teachers: teacherMetrics });
+                setDonutData({ teachers: teacherMetrics, funds });
             } catch (err) {
                 setError('Failed to fetch yearly statistics.');
                 console.error('API Error:', err);
@@ -332,7 +340,7 @@ const YearlyCommunityDashboard = () => {
         fetchData();
     }, []);
 
-    if (loading) return <div className="loading-container">Loading dashboard...</div>;
+    if (loading) return <div className="loading-container" style={{ textAlign: 'center', padding: '60px 20px', color: '#666', fontSize: '1.1rem' }}>Loading dashboard...</div>;
     if (error) return <div className="error-container">{error}</div>;
     if (!data) return null;
 
@@ -491,7 +499,7 @@ const YearlyCommunityDashboard = () => {
                     <div className="card-label">Total Publications</div>
                 </div>
             </div>
-            <div className="dashboard-charts-row">
+            <div className="dashboard-charts-row" style={{ gap: 24 }}>
                 <div className="chart-container dashboard-chart-half">
                     {!drillDownView ? (
                         <>
@@ -501,6 +509,9 @@ const YearlyCommunityDashboard = () => {
                             </ResponsiveContainer>
                         </>
                     ) : null}
+                </div>
+                <div className="chart-container dashboard-chart-half" style={{ background: '#fff', borderRadius: 12, border: '1px solid #eaeaea', padding: 16 }}>
+                    <FundingSummary funds={(donutData && donutData.funds) || []} />
                 </div>
             </div>
             {/* Place ISFCR Awards directly above the Teachers Metrics (Donut) */}
@@ -526,6 +537,210 @@ const YearlyCommunityDashboard = () => {
             
             <MetricBarPopup open={!!popupMetric} metric={popupMetric} data={donutData.teachers} onClose={() => setPopupMetric(null)} onBarClick={handleBarClick} />
             <YearWisePopup open={yearPopup.open} teacher={yearPopup.teacher} metric={yearPopup.metric} onClose={() => setYearPopup({ open: false, teacher: null, metric: null, yearData: null })} yearData={yearPopup.yearData} />
+        </div>
+    );
+};
+
+
+const FundingSummary = ({ funds }) => {
+    const [open, setOpen] = useState(false);
+    if (!Array.isArray(funds)) return null;
+
+    const completed = funds.filter(f => (f.status || '').toLowerCase().includes('complete')).length;
+    const ongoing = funds.filter(f => (f.status || '').toLowerCase().includes('ongoing')).length;
+    const totalRevenue = Math.floor(
+        funds.reduce((sum, f) => sum + (typeof f.revenue === 'number' ? f.revenue : parseFloat(f.revenue) || 0), 0)
+    );
+
+    /*const imageUrls = [
+        "https://bluone.in//media/2022/06/fabrik_logo.png",
+        "https://images.jdmagicbox.com/v2/comp/bangalore/a6/080pxx80.xx80.170602160812.j7a6/catalogue/enphiniti-engineering-solutions-pvt-ltd-palace-orchard-bangalore-corporate-companies-9w23cyb83l.jpg",
+        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTKGEosdfo9uj__rUwtEsU8JPbBa5yZbA5f9Sgzpq2cp_YGvQ729IlylOVFGnh5NNmFH_g&usqp=CAU",
+        "https://content.jdmagicbox.com/v2/comp/bangalore/y5/080pxx80.xx80.130328150905.l8y5/catalogue/betsol-banashankari-1st-stage-bangalore-computer-offshore-software-developers-bwny0gvta9.jpg",
+        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRW_ny9jqXf9WCtBjgaDpY6xVPd773kXI9o6yKl83CB2YyIntCb8EjVjgIrSyhVq4uqexc&usqp=CAU",
+        "https://media.licdn.com/dms/image/v2/C560BAQEfqGboJHdR3A/company-logo_200_200/company-logo_200_200/0/1630660532577?e=2147483647&v=beta&t=_jZs5Ss-l8g5txBmOmlxLLg9aSY0sT9b7tInG7fvpYo",
+        "https://images.crunchbase.com/image/upload/c_pad,h_256,w_256,f_auto,q_auto:eco,dpr_1/agbgeeqqlsrjzf4wenko",
+        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS8GKSFehsvGW0pst598CpyvzHhTTnOmN1us59mCPJ5FmELkJY-HYcjekNTuMyFWri9rrc&usqp=CAU"
+    ];*/
+
+    const imageUrls = funds.map(f => (f.imageUrl))
+
+    const imageStyle = {
+        width: '100%',
+        height: 60,
+        objectFit: 'contain',
+        borderRadius: 6,
+        border: '1px solid #eee',
+        flexShrink: 0
+    };
+
+    return (
+        <div>
+            <div style={{ display: 'flex', gap: 16, alignItems: 'center', marginBottom: 12 }}>
+                {/* Stats */}
+                
+
+                <div style={{ display: 'flex', flexDirection: 'column-reverse', gap: '24px', width: '75%' }}>
+                    <div style={{ background: '#fff8e1', color: '#f57f17', padding: '10px 12px', borderRadius: 8, minWidth: 160, textAlign: 'center' }}>
+                        <div style={{ fontSize: 20, fontWeight: 700 }}>{ongoing}</div>
+                        <div style={{ fontSize: 13 }}>Ongoing</div>
+                    </div>
+                    
+                    <div style={{ background: '#e8f5e9', color: '#2e7d32', padding: '10px 12px', borderRadius: 8, minWidth: 160, textAlign: 'center' }}>
+                        <div style={{ fontSize: 20, fontWeight: 700 }}>{completed}</div>
+                        <div style={{ fontSize: 13 }}>Completed</div>
+                    </div>
+                    
+                    <div style={{ background: '#e3f2fd', color: '#1976d2', padding: '10px 12px', borderRadius: 8, minWidth: 180, textAlign: 'center' }}>
+                        <div style={{ fontSize: 20, fontWeight: 700 }}>{totalRevenue.toLocaleString()}+</div>
+                        <div style={{ fontSize: 13 }}>Total Revenue</div>
+                    </div>
+                    <div>
+                        <h2 className="chart-title">Funding Overview</h2>
+                    </div>
+                </div>
+
+                {/* Carousel */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', flexGrow: 1 }}>
+                    <div>
+                        <button
+                            onClick={() => setOpen(true)}
+                            style={{
+                                marginLeft: 'auto',
+                                background: '#1976d2',
+                                color: 'white',
+                                border: 'none',
+                                padding: '8px 12px',
+                                borderRadius: 6,
+                                cursor: 'pointer',
+                                marginTop: '18px',
+                                marginBottom: '10px'
+                            }}
+                        >
+                            View Details
+                        </button>
+                    </div>
+
+                    {/* Infinite Scroll Carousel */}
+                    <div style={{ overflow: 'hidden', height: 300, position: 'relative' }}>
+                        <div
+                            style={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                animation: 'scroll-up 20s linear infinite',
+                                animationPlayState: 'running'
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.animationPlayState = 'paused'}
+                            onMouseLeave={e => e.currentTarget.style.animationPlayState = 'running'}
+                        >
+                            {/* Images (duplicated) */}
+                            {[...imageUrls, ...imageUrls].map((url, idx) => (
+                                <div key={idx} style={{width: '60px', height: '60px', overflow: 'hidden'}}>
+                                    <img key={idx} src={url} alt="fund" style={imageStyle} />
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Animation keyframes */}
+                        <style>
+                            {`
+                                @keyframes scroll-up {
+                                    0% { transform: translateY(0); }
+                                    100% { transform: translateY(-50%); }
+                                }
+                            `}
+                        </style>
+                    </div>
+                </div>
+            </div>
+
+            {/* Modal */}
+            {open && (
+                <div
+                    style={{
+                        position: 'fixed',
+                        inset: 0,
+                        background: 'rgba(0,0,0,0.45)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 1200
+                    }}
+                    onClick={() => setOpen(false)}
+                >
+                    <div
+                        style={{
+                            background: 'white',
+                            borderRadius: 12,
+                            padding: 20,
+                            maxWidth: '95vw',
+                            maxHeight: '90vh',
+                            overflow: 'auto',
+                            width: 1000
+                        }}
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <div style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            marginBottom: 12
+                        }}>
+                            <h3 style={{ margin: 0 }}>Funding Details</h3>
+                            <button
+                                onClick={() => setOpen(false)}
+                                style={{
+                                    background: 'white',
+                                    color: 'black',
+                                    border: '1px solid #ddd',
+                                    padding: '6px 10px',
+                                    borderRadius: 6,
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                Close
+                            </button>
+                        </div>
+
+                        <div style={{ overflowX: 'auto' }}>
+                            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                                <thead>
+                                    <tr style={{ background: '#f5f5f5' }}>
+                                        <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Teacher Consultant</th>
+                                        <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Consultant Agency</th>
+                                        <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Sponsoring Agency</th>
+                                        <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Year</th>
+                                        <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Revenue</th>
+                                        <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Status</th>
+                                        <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Image</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {funds.map((f, idx) => (
+                                        <tr key={idx}>
+                                            <td style={{ padding: 8, borderBottom: '1px solid #f0f0f0' }}>{f.teacherConsultant}</td>
+                                            <td style={{ padding: 8, borderBottom: '1px solid #f0f0f0' }}>{f.consultantAgency}</td>
+                                            <td style={{ padding: 8, borderBottom: '1px solid #f0f0f0' }}>{f.sponsoringAgency}</td>
+                                            <td style={{ padding: 8, borderBottom: '1px solid #f0f0f0' }}>{f.year}</td>
+                                            <td style={{ padding: 8, borderBottom: '1px solid #f0f0f0' }}>
+                                                {(typeof f.revenue === 'number' ? f.revenue : parseFloat(f.revenue) || 0).toLocaleString()}
+                                            </td>
+                                            <td style={{ padding: 8, borderBottom: '1px solid #f0f0f0' }}>{f.status}</td>
+                                            <td style={{ padding: 8, borderBottom: '1px solid #f0f0f0' }}>
+                                                {f.imageUrl ? (
+                                                    <img src={f.imageUrl} alt="fund" style={imageStyle} />
+                                                ) : (
+                                                    <span style={{ color: '#aaa' }}>—</span>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

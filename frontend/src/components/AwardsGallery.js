@@ -94,22 +94,43 @@ const AwardsGallery = () => {
   return (
     <section className="awards-section">
       <h2 className="awards-title">ISFCR Awards</h2>
-      <div className="awards-grid">
-        {visibleAwards.map((a, idx) => (
-          <div className="award-card" key={a._id || idx}>
-            <img 
-              className="award-image" 
-              src={a._displayUrl} 
-              alt={a.awardName || a.imageFilename || 'Award'} 
-              onError={(e) => {
-                // Hide broken image and show fallback text
-                e.target.style.display = 'none';
-                e.target.nextSibling.textContent = 'Image not available';
-              }}
-            />
-            <div className="award-name">{a.awardName || a.imageFilename || 'Award'}</div>
+      <div className="awards-grid-container">
+        <div className="awards-track">
+          {/* First set of awards */}
+          <div className="awards-grid">
+            {visibleAwards.map((a, idx) => (
+              <div className="award-card" key={`1-${a._id || idx}`}>
+                <img 
+                  className="award-image" 
+                  src={a._displayUrl} 
+                  alt={a.awardName || a.imageFilename || 'Award'} 
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.nextSibling.textContent = 'Image not available';
+                  }}
+                />
+                <div className="award-name">{a.awardName || a.imageFilename || 'Award'}</div>
+              </div>
+            ))}
           </div>
-        ))}
+          {/* Duplicate set for seamless loop */}
+          <div className="awards-grid" aria-hidden="true">
+            {visibleAwards.map((a, idx) => (
+              <div className="award-card" key={`2-${a._id || idx}`}>
+                <img 
+                  className="award-image" 
+                  src={a._displayUrl} 
+                  alt={a.awardName || a.imageFilename || 'Award'} 
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.nextSibling.textContent = 'Image not available';
+                  }}
+                />
+                <div className="award-name">{a.awardName || a.imageFilename || 'Award'}</div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </section>
   );

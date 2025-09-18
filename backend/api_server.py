@@ -17,6 +17,11 @@ import string
 import threading
 import time
 import uuid
+#from . import db_config
+#from db_config import db_manager
+#from .db_config import db_manage
+import sys, os
+sys.path.append(os.path.dirname(__file__))
 from db_config import db_manager
 import io
 import csv
@@ -112,6 +117,70 @@ def list_awards():
         for a in awards:
             a['_id'] = str(a['_id'])
         return jsonify({'success': True, 'awards': awards}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+# ---- Funding (Funds) endpoints ----
+@app.route('/api/funds', methods=['POST'])
+def add_funding_record():
+    """Create a funding/consultancy record in the 'funds' collection."""
+    try:
+        data = request.get_json(force=True)
+        # Required fields
+        teacher_consultant = (data.get('teacherConsultant') or '').strip()
+        consultant_agency = (data.get('consultantAgency') or '').strip()
+        sponsoring_agency = (data.get('sponsoringAgency') or '').strip()
+        year_val = data.get('year')
+        revenue_val = data.get('revenue')
+        project_status = (data.get('status') or '').strip()
+        image_url = (data.get('imageUrl') or '').strip() or None
+
+        if not teacher_consultant or not consultant_agency or not sponsoring_agency or not year_val or not project_status:
+            return jsonify({'error': 'teacherConsultant, consultantAgency, sponsoringAgency, year, and status are required'}), 400
+
+        # Coerce year to int when possible
+        try:
+            year = int(str(year_val))
+        except Exception:
+            return jsonify({'error': 'year must be a number'}), 400
+
+        # Coerce revenue to float if provided
+        revenue = None
+        if revenue_val is not None and str(revenue_val).strip() != '':
+            try:
+                revenue = float(str(revenue_val))
+            except Exception:
+                return jsonify({'error': 'revenue must be a number'}), 400
+
+        db = db_manager.connect()
+        funds_collection = db['funds']
+        doc = {
+            'teacherConsultant': teacher_consultant,
+            'consultantAgency': consultant_agency,
+            'sponsoringAgency': sponsoring_agency,
+            'year': year,
+            'revenue': revenue,
+            'status': project_status,
+            'imageUrl': image_url,
+            'createdAt': datetime.utcnow().isoformat()
+        }
+        result = funds_collection.insert_one(doc)
+        doc['_id'] = str(result.inserted_id)
+        return jsonify({'success': True, 'fund': doc}), 201
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/funds', methods=['GET'])
+def list_funding_records():
+    """List all funding/consultancy records from the 'funds' collection."""
+    try:
+        db = db_manager.connect()
+        funds_collection = db['funds']
+        records = list(funds_collection.find({}).sort([('year', -1), ('createdAt', -1)]))
+        for r in records:
+            r['_id'] = str(r.get('_id'))
+        return jsonify({'success': True, 'funds': records}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

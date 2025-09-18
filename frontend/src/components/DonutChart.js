@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 
 // Distinct color themes for each layer
@@ -50,15 +50,35 @@ const DonutChart = ({ donutData, onSegmentClick }) => {
         return <div>No donut chart data available.</div>;
     }
 
+    // Responsive sizing using container width
+    const containerRef = useRef(null);
+    const [containerWidth, setContainerWidth] = useState(0);
+    useEffect(() => {
+        const measure = () => {
+            if (containerRef.current) {
+                setContainerWidth(containerRef.current.clientWidth);
+            }
+        };
+        measure();
+        window.addEventListener('resize', measure);
+        return () => window.removeEventListener('resize', measure);
+    }, []);
+
+    // Fallback width for server-render or first paint
+    const width = containerWidth || 600;
+    // Chart height proportional to width, capped
+    const chartHeight = Math.min(700, Math.max(360, Math.round(width * 0.9)));
+
     // Prepare data for each layer, tagging with layer info
     const hIndexData = donutData.teachers.map((t, idx) => ({ name: t.name, value: t.hIndex, layer: 'hIndex', fill: HINDEX_COLORS[idx % HINDEX_COLORS.length] }));
     const i10IndexData = donutData.teachers.map((t, idx) => ({ name: t.name, value: t.i10Index, layer: 'i10Index', fill: I10_COLORS[idx % I10_COLORS.length] }));
     const publicationsData = donutData.teachers.map((t, idx) => ({ name: t.name, value: t.publications, layer: 'publications', fill: PUBS_COLORS[idx % PUBS_COLORS.length] }));
 
-    // Chart sizing: bigger container
-    const outerRadius = 300;
-    const layerWidth = 40;
-    const layerGap = 30;
+    // Chart sizing computed from width
+    const maxRadius = Math.floor(Math.min(width, chartHeight) / 2) - 16;
+    const outerRadius = Math.max(140, Math.min(320, maxRadius));
+    const layerWidth = Math.max(20, Math.round(outerRadius * 0.14));
+    const layerGap = Math.max(12, Math.round(outerRadius * 0.08));
 
     // Custom legend for layers (color theme per metric)
     const customLegend = (
@@ -78,10 +98,10 @@ const DonutChart = ({ donutData, onSegmentClick }) => {
     };
 
     return (
-        <div className="donut-chart-container" style={{ width: '100%', height: 800 }}>
-            <h2 className="chart-title">Teacher Metrics</h2>
+        <div ref={containerRef} className="donut-chart-container" style={{ width: '100%', height: chartHeight + 100 }}>
+            <h2 className="chart-title" style={{ marginBottom: 8 }}>Teacher Metrics</h2>
             {customLegend}
-            <ResponsiveContainer width="100%" height={700}>
+            <ResponsiveContainer width="100%" height={chartHeight}>
                 <PieChart>
                     {/* Publications (outermost) */}
                     <Pie

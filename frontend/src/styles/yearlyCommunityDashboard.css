@@ -4,6 +4,8 @@
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     width: 100%;
     box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
 }
 
 .dashboard-main-title {
@@ -91,6 +93,8 @@
     
     justify-content: center;
     align-items: stretch;
+    display: flex;
+    flex-direction: row;
     margin-bottom: 32px;
     width: 100%;
     box-sizing: border-box;
@@ -120,16 +124,16 @@
     border-radius: 12px;
     /*box-shadow: 0 2px 8px rgba(0,0,0,0.04);*/
     padding: 24px 0;
-    height: 1000px;
-    width: 1000px;
+    height: 100%;
+    width: 100%;
 }
 
 .donut-chart-section {
-  width: 1425px;
+  width: 100%;
   /*max-width: 100%;*/
   /*left: 0px;*/
-  margin-left: 107%;
-  transform: translateX(-50%);
+  /*margin-left: 107%;
+  transform: translateX(-50%);*/
   /*background: #f5f7fa;*/
   background-color: #ffffff;
   padding: 48px 0 32px 0;
@@ -162,8 +166,9 @@
   box-shadow: 0 8px 32px rgba(0,0,0,0.18), 0 1.5px 6px rgba(0,0,0,0.07);
   border-radius: 18px;
   padding: 36px 36px 28px 36px;
-  min-width: 700px; /* Increased from 340px */
-  max-width: 1200px; /* Increased for more space */
+  /*min-width: 700px;*/ /* Increased from 340px */
+  /*max-width: 1200px;*/ /* Increased for more space */
+  width: 100%;
   max-height: 90vh;
   overflow-y: auto;
   margin: 0;
@@ -211,7 +216,7 @@
         padding-right: 2vw;
     }
     .dashboard-charts-row {
-        grid-template-columns: 1fr;
+        flex-direction: column;
         gap: 18px;
         align-items: center;
         width: 100%;
@@ -233,9 +238,9 @@
 }
 
 .domain-tiles-section {
-    width: 1425px;
-    margin-left: 107%;
-    transform: translateX(-50%);
+    width: 100%;
+    /*margin-left: 50%;
+    transform: translateX(-50%);*/
     background-color: #ffffff;
     padding: 48px 0 32px 0;
     box-shadow: 0 2px 12px rgba(0,0,0,0.04);
@@ -249,9 +254,9 @@
 
 /* Awards panel aligned like donut and domain sections */
 .yearly-dashboard-container .awards-section {
-    width: 1425px;
-    margin-left: 107%;
-    transform: translateX(-50%);
+    width: 100%;
+    /*margin-left: 107%;
+    transform: translateX(-50%);*/
     background-color: #ffffff;
     padding: 24px 24px 16px 24px;
     box-shadow: 0 2px 12px rgba(0,0,0,0.04);
@@ -260,20 +265,101 @@
     box-sizing: border-box;
 }
 
-.yearly-dashboard-container .awards-grid {
+/* Container that holds the scrolling track */
+.awards-grid-container {
+    overflow: hidden;
+    width: 100%;
+    position: relative;
+    mask: linear-gradient(90deg, transparent, white 20%, white 80%, transparent);
+    -webkit-mask: linear-gradient(90deg, transparent, white 20%, white 80%, transparent);
+    height: fit-content;
+}
+
+/* Track that scrolls horizontally */
+.awards-track {
     display: flex;
-    flex-wrap: nowrap; /* single horizontal line */
+    width: max-content;
+    animation: scroll-left 30s linear infinite;
+    gap: 0;
+    align-items: flex-start;
+}
+
+/* Each set of awards */
+.awards-grid {
+    display: flex;
     gap: 16px;
-    overflow-x: auto; /* scroll if many */
-    padding-bottom: 8px;
+    flex-shrink: 0;
+    align-items: flex-start;
+}
+
+/* Individual award card */
+.award-card {
+    min-width: 200px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    height: auto;
+}
+
+/* Keyframes for smooth looping scroll */
+@keyframes scroll-left {
+    0% {
+        transform: translateX(0);
+    }
+    100% {
+        transform: translateX(-50%);
+    }
+}
+
+/* Pause animation on hover */
+.awards-track:hover {
+    animation-play-state: paused;
 }
 
 .yearly-dashboard-container .award-card {
     flex: 0 0 220px; /* fixed card width for horizontal row */
+    background: #fff;
+    border-radius: 8px;
+    padding: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: transform 0.2s ease;
+    height: 210px; /* fixed height to ensure all cards align */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.yearly-dashboard-container .award-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
 .yearly-dashboard-container .award-image {
     height: 140px;
+    width: 100%;
+    object-fit: contain;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    flex-shrink: 0;
+}
+
+.yearly-dashboard-container .award-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #333;
+    line-height: 1.3;
+    word-wrap: break-word;
+    height: auto;
+}
+
+.awards-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #182745;
+    text-align: center;
+    margin-bottom: 20px;
 }
 
 @media (max-width: 900px) {
@@ -283,6 +369,5 @@
     }
     .donut-chart-section {
         width: 100%;
-        margin-left: 50%;
     }
 } 
