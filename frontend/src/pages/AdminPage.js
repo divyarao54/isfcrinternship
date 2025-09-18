@@ -83,7 +83,7 @@ const FundingForm = ({ onClose }) => {
         <input value={teacherConsultant} onChange={(e) => setTeacherConsultant(e.target.value)} required />
       </div>
       <div className="form-group">
-        <label>Name of Consultant Agency *</label>
+        <label>Name of Consultancy Project *</label>
         <input value={consultantAgency} onChange={(e) => setConsultantAgency(e.target.value)} required />
       </div>
       <div className="form-group">

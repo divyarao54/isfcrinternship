@@ -707,7 +707,7 @@ const FundingSummary = ({ funds }) => {
                                 <thead>
                                     <tr style={{ background: '#f5f5f5' }}>
                                         <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Teacher Consultant</th>
-                                        <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Consultant Agency</th>
+                                        <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Consultancy Project</th>
                                         <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Sponsoring Agency</th>
                                         <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Year</th>
                                         <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Revenue</th>
