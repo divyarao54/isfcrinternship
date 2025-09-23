@@ -1044,13 +1044,13 @@
 }
 
 /* Global Button Styles */
-button, .admin-buttons button, .admin-login-form button, .admin-signup-form button, .admin-forgot-form button, .admin-reset-form button, .admin-entry-buttons button, .delete-btn, .confirm-delete-btn, .cancel-delete-btn, .view-pubs-btn, .back-btn, .show-more-btn, .show-less-btn, .retry-btn, .summarize-btn, .add-btn, .remove-btn, .submit-btn, .cancel-btn, .edit-btn {
+button, .admin-buttons button, .admin-login-form button, .admin-account-buttons button, .admin-signup-form button, .admin-forgot-form button, .admin-reset-form button, .admin-entry-buttons button, .delete-btn, .confirm-delete-btn, .cancel-delete-btn, .view-pubs-btn, .back-btn, .show-more-btn, .show-less-btn, .retry-btn, .summarize-btn, .add-btn, .remove-btn, .submit-btn, .cancel-btn, .edit-btn, .logout-button, .change-password-button {
   background-color: #182745 !important;
   color: #fff !important;
   border: none;
   transition: background 0.18s, color 0.18s;
 }
-button:hover:not(:disabled), .admin-buttons button:hover:not(:disabled), .admin-login-form button:hover:not(:disabled), .admin-signup-form button:hover:not(:disabled), .admin-forgot-form button:hover:not(:disabled), .admin-reset-form button:hover:not(:disabled), .admin-entry-buttons button:hover:not(:disabled), .delete-btn:hover:not(:disabled), .confirm-delete-btn:hover:not(:disabled), .cancel-delete-btn:hover:not(:disabled), .view-pubs-btn:hover:not(:disabled), .back-btn:hover:not(:disabled), .show-more-btn:hover:not(:disabled), .show-less-btn:hover:not(:disabled), .retry-btn:hover:not(:disabled), .summarize-btn:hover:not(:disabled), .add-btn:hover:not(:disabled), .remove-btn:hover:not(:disabled), .submit-btn:hover:not(:disabled), .cancel-btn:hover:not(:disabled), .edit-btn:hover:not(:disabled) {
+/*button:hover:not(:disabled), */.admin-buttons button:hover:not(:disabled), .admin-account-buttons button:hover:not(:disabled), .admin-login-form button:hover:not(:disabled), .admin-signup-form button:hover:not(:disabled), .admin-forgot-form button:hover:not(:disabled), .admin-reset-form button:hover:not(:disabled), .admin-entry-buttons button:hover:not(:disabled), .delete-btn:hover:not(:disabled), .confirm-delete-btn:hover:not(:disabled), .cancel-delete-btn:hover:not(:disabled), .view-pubs-btn:hover:not(:disabled), .back-btn:hover:not(:disabled), .show-more-btn:hover:not(:disabled), .show-less-btn:hover:not(:disabled), .retry-btn:hover:not(:disabled), .summarize-btn:hover:not(:disabled), .add-btn:hover:not(:disabled), .remove-btn:hover:not(:disabled), .submit-btn:hover:not(:disabled), .cancel-btn:hover:not(:disabled), .edit-btn:hover:not(:disabled) .change-password-button:hover:not(:disabled) .logout-button:hover:not(:disabled) {
   background-color: #ec8739 !important;
   color: #fff !important;
 }

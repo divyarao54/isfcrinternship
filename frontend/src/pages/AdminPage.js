@@ -1191,10 +1191,10 @@ const AdminPage = () => {
             </div>
           </div>
           <div className="admin-account-buttons" style={{zIndex: '9'}}>
-            <button onClick={() => { setShowChangePassword(true); handleAdminActivity(); }} style={{ marginRight: 16, background: '#182745', color: 'white' }}>
+            <button className="change-password-button" onClick={() => { setShowChangePassword(true); handleAdminActivity(); }} style={{ marginRight: 16, background: '#182745', color: 'white' }}>
               Change Password
             </button>
-            <button onClick={handleLogout} style={{ background: '#182745', color: 'white', zIndex: '9' }}>Logout</button>
+            <button className="logout-button" onClick={handleLogout} style={{ background: '#182745', color: 'white', zIndex: '9' }}>Logout</button>
           </div>
           {status && <p className="status-text">{status}</p>}
           {addPubSuccess && <div style={{ color: 'green', marginTop: 8, fontSize: '0.9rem' }}>{addPubSuccess}</div>}
@@ -1338,6 +1338,14 @@ const AdminPage = () => {
                 <div style={{ marginBottom: 12 }}>
                   <p>Please upload an .xlsx file with columns: <b>group_id, name, srn, mentor, project_title, project_description, year, report, poster</b>.</p>
                 </div>
+                <div className="form-group">
+                  <label>Category *</label>
+                  <select id="bulk-category" defaultValue="" onChange={() => {}}>
+                    <option value="" disabled>Select Category</option>
+                    <option value="Capstone">Capstone</option>
+                    <option value="Summer Internship">Summer Internship</option>
+                  </select>
+                </div>
                 <input type="file" accept=".xlsx" onChange={(e) => setBulkFile(e.target.files?.[0] || null)} />
                 <div className="form-actions" style={{ marginTop: 16 }}>
                   <button className="cancel-btn" onClick={() => { setShowBulkModal(false); setBulkFile(null); setBulkPreview([]); }}>Cancel</button>
@@ -1347,7 +1355,16 @@ const AdminPage = () => {
                       setBulkUploading(true);
                       const formData = new FormData();
                       formData.append('file', bulkFile);
-                      const resp = await axios.post('http://localhost:5000/api/yearly-projects/bulk', formData, {
+                      const categoryEl = document.getElementById('bulk-category');
+                      const category = categoryEl ? categoryEl.value : '';
+                      if (!category) {
+                        alert('Please select a category (Capstone or Summer Internship).');
+                        setBulkUploading(false);
+                        return;
+                      }
+                      formData.append('category', category);
+                      const API_BASE = process.env.REACT_APP_API_URL || '';
+                      const resp = await axios.post(`${API_BASE}/api/yearly-projects/bulk`, formData, {
                         headers: { 'Content-Type': 'multipart/form-data' }
                       });
                       if (resp.data && resp.data.success) {

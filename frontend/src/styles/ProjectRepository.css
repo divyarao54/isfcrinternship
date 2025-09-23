@@ -299,6 +299,13 @@
   gap: 0;
 }
 
+.category-section { margin: 8px 0; }
+.category-header { 
+  font-weight: 700; 
+  color: #2c3e50; 
+  padding: 6px 0 6px 0; 
+}
+
 .project-card {
   background: transparent;
   padding: 4px 0 4px 24px;
@@ -861,6 +868,36 @@
   font-weight: 400;
   margin-left: 8px;
 }
+
+.pr-category-links {
+  margin-left: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.pr-category-btn:first-child{
+  width: -webkit-fill-available;
+}
+
+.pr-category-btn {
+  background: none !important;
+  border: none;
+  color: #444 !important;
+  cursor: pointer;
+  font-size: 0.9em;
+  text-align: left !important;
+  padding: 2px 0 !important;
+}
+
+.pr-category-btn:hover {
+  background-color: none !important;
+  color: #444 !important;
+  background: none !important;
+  text-decoration: underline;
+}
+
 
 /* Responsive adjustments for teacher filter */
 @media (max-width: 900px) {

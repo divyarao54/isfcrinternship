@@ -161,6 +161,10 @@ const ProjectRepository = () => {
     return years.sort((a, b) => b - a); // Sort in descending order
   };
 
+  const getProjectsByYearAndCategory = (year, category) => {
+    return getProjectsByYear(year).filter(p => (p.category || '') === category);
+  };
+
   const resetForm = () => {
     setSelectedYear('');
     setSelectedTeacher('');
@@ -504,41 +508,93 @@ const ProjectRepository = () => {
                   </div>
                   {expandedYears.has(year) && (
                     <div className="projects-list">
-                      {getProjectsByYear(year).map((project, index) => (
-                        <div key={index} className="project-card">
-                          <div className="project-header">
-                            <h4 className="project-title">{project.projectName}</h4>
-                            <span className="project-teacher">{project.teacherName}</span>
-                          </div>
-                          <span className="project-description">{project.projectDescription} </span>
-                          {project.students && (
-                            <span className="project-students">
-                              <strong>By</strong>{' '}
-                              {Array.isArray(project.students)
-                                ? project.students
-                                    .filter(s => s && (s.name || s.srn))
-                                    .map(s => `${s.name || ''}${s.srn ? ` (${s.srn})` : ''}`)
-                                    .join(', ')
-                                : project.students}. &nbsp;
-                            </span>
-                          )}
-                          {(project.report || project.poster) && (
-                            <span className="project-students" style={{ marginTop: 6 }}>
-                              {project.report && (
-                                <a href={project.report} target="_blank" rel="noreferrer" style={{ textDecoration: 'underline solid #000000', textUnderlineOffset: '3px', marginRight: 12 }}>report</a>
+                      {/* Capstone Section */}
+                      <div className="category-section" id={`year-${year}-capstone`}>
+                        <div className="category-header">Capstone</div>
+                        {getProjectsByYearAndCategory(year, 'Capstone').length === 0 ? (
+                          <div className="no-projects" style={{padding: '8px 0'}}>No Capstone projects</div>
+                        ) : (
+                          getProjectsByYearAndCategory(year, 'Capstone').map((project, index) => (
+                            <div key={`cap-${index}`} className="project-card">
+                              <div className="project-header">
+                                <h4 className="project-title">{project.projectName}</h4>
+                                <span className="project-teacher">{project.teacherName}</span>
+                              </div>
+                              <span className="project-description">{project.projectDescription} </span>
+                              {project.students && (
+                                <span className="project-students">
+                                  <strong>By</strong>{' '}
+                                  {Array.isArray(project.students)
+                                    ? project.students
+                                        .filter(s => s && (s.name || s.srn))
+                                        .map(s => `${s.name || ''}${s.srn ? ` (${s.srn})` : ''}`)
+                                        .join(', ')
+                                    : project.students}. &nbsp;
+                                </span>
                               )}
-                              {project.poster && (
-                                <a href={project.poster} target="_blank" rel="noreferrer" style={{ textDecoration: 'underline solid #000000', textUnderlineOffset: '3px' }}>poster</a>
+                              {(project.report || project.poster) && (
+                                <span className="project-students" style={{ marginTop: 6 }}>
+                                  {project.report && (
+                                    <a href={project.report} target="_blank" rel="noreferrer" style={{ textDecoration: 'underline solid #000000', textUnderlineOffset: '3px', marginRight: 12 }}>report</a>
+                                  )}
+                                  {project.poster && (
+                                    <a href={project.poster} target="_blank" rel="noreferrer" style={{ textDecoration: 'underline solid #000000', textUnderlineOffset: '3px' }}>poster</a>
+                                  )}
+                                </span>
                               )}
-                            </span>
-                          )}
-                          <div className="project-meta">
-                            {isAdmin && (
-                              <button className="delete-project-btn" onClick={() => openDeleteModal(project)} title="Delete Project">🗑️ Delete</button>
-                            )}
-                          </div>
-                        </div>
-                      ))}
+                              <div className="project-meta">
+                                {isAdmin && (
+                                  <button className="delete-project-btn" onClick={() => openDeleteModal(project)} title="Delete Project">🗑️ Delete</button>
+                                )}
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+
+                      {/* Summer Internship Section */}
+                      <div className="category-section" id={`year-${year}-internship`} style={{marginTop: '8px'}}>
+                        <div className="category-header">Summer Internship</div>
+                        {getProjectsByYearAndCategory(year, 'Summer Internship').length === 0 ? (
+                          <div className="no-projects" style={{padding: '8px 0'}}>No Summer Internship projects</div>
+                        ) : (
+                          getProjectsByYearAndCategory(year, 'Summer Internship').map((project, index) => (
+                            <div key={`si-${index}`} className="project-card">
+                              <div className="project-header">
+                                <h4 className="project-title">{project.projectName}</h4>
+                                <span className="project-teacher">{project.teacherName}</span>
+                              </div>
+                              <span className="project-description">{project.projectDescription} </span>
+                              {project.students && (
+                                <span className="project-students">
+                                  <strong>By</strong>{' '}
+                                  {Array.isArray(project.students)
+                                    ? project.students
+                                        .filter(s => s && (s.name || s.srn))
+                                        .map(s => `${s.name || ''}${s.srn ? ` (${s.srn})` : ''}`)
+                                        .join(', ')
+                                    : project.students}. &nbsp;
+                                </span>
+                              )}
+                              {(project.report || project.poster) && (
+                                <span className="project-students" style={{ marginTop: 6 }}>
+                                  {project.report && (
+                                    <a href={project.report} target="_blank" rel="noreferrer" style={{ textDecoration: 'underline solid #000000', textUnderlineOffset: '3px', marginRight: 12 }}>report</a>
+                                  )}
+                                  {project.poster && (
+                                    <a href={project.poster} target="_blank" rel="noreferrer" style={{ textDecoration: 'underline solid #000000', textUnderlineOffset: '3px' }}>poster</a>
+                                  )}
+                                </span>
+                              )}
+                              <div className="project-meta">
+                                {isAdmin && (
+                                  <button className="delete-project-btn" onClick={() => openDeleteModal(project)} title="Delete Project">🗑️ Delete</button>
+                                )}
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -547,22 +603,54 @@ const ProjectRepository = () => {
           )}
         </div>
         <div className="pr-sidebar">
-          {getAvailableYears().map(year => (
-            <div key={year} className="pr-year-link" onClick={() => {
-              const el = document.getElementById(`year-${year}`);
-              if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
-              setExpandedYears(prev => new Set([...prev, year]));
-              handleYearClick(year);
-            }}>
-              <span 
-              key={year}
+        {getAvailableYears().map(year => (
+          <div key={year} className="pr-year-link">
+            <span 
               className={`pr-year-line ${activeYear === year ? 'active' : ''}`} 
               onClick={() => handleYearClick(year)}
-              />
-              <button className="pr-year-btn" aria-label={`Go to ${year}`}>{year}</button>
-            </div>
-          ))}
-        </div>
+            />
+            <button
+              className="pr-year-btn"
+              aria-label={`Go to ${year}`}
+              onClick={() => {
+                const el = document.getElementById(`year-${year}`);
+                if (el) {
+                  el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+                setExpandedYears(prev => new Set([...prev, year]));
+                handleYearClick(year);
+              }}
+            >
+              {year}
+            </button>
+
+            {/* Show categories only for the active year */}
+            {activeYear === year && (
+              <div className="pr-category-links">
+                <button
+                  className="pr-category-btn"
+                  onClick={() => {
+                    const el = document.getElementById(`year-${year}-capstone`);
+                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }}
+                >
+                  Capstone
+                </button>
+                <button
+                  className="pr-category-btn"
+                  onClick={() => {
+                    const el = document.getElementById(`year-${year}-internship`);
+                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }}
+                >
+                  Summer Internship
+                </button>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
       </div>
 
       {/* Delete Project Modal */}

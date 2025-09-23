@@ -1690,7 +1690,7 @@ def get_yearly_projects():
         
         # Get all projects sorted by year (descending) and creation date (descending)
         # Explicitly include _id field in the query
-        projects = list(projects_collection.find({}, {'_id': 1, 'year': 1, 'teacherName': 1, 'projectName': 1, 'projectDescription': 1, 'students': 1, 'createdAt': 1, 'report': 1, 'poster': 1}).sort([
+        projects = list(projects_collection.find({}, {'_id': 1, 'year': 1, 'teacherName': 1, 'projectName': 1, 'projectDescription': 1, 'students': 1, 'createdAt': 1, 'report': 1, 'poster': 1, 'category': 1}).sort([
             ('year', -1), 
             ('createdAt', -1)
         ]))
@@ -1736,6 +1736,12 @@ def add_yearly_projects_bulk():
         file = request.files['file']
         if file.filename == '':
             return jsonify({'error': 'Empty filename'}), 400
+
+        # Read and validate category from form data
+        category = (request.form.get('category') or '').strip()
+        valid_categories = {'Capstone', 'Summer Internship'}
+        if category not in valid_categories:
+            return jsonify({'error': 'Invalid or missing category. Choose Capstone or Summer Internship.'}), 400
 
         # Read workbook in memory
         data = file.read()
@@ -1828,6 +1834,7 @@ def add_yearly_projects_bulk():
                 'students': g['students'],
                 'report': g['report'],
                 'poster': g['poster'],
+                'category': category,
                 'createdAt': datetime.utcnow().isoformat(),
                 'groupId': gid
             }
@@ -1850,7 +1857,8 @@ def add_yearly_projects_bulk():
                 'projectDescription': doc['projectDescription'],
                 'students': doc['students'],
                 'report': doc['report'],
-                'poster': doc['poster']
+                'poster': doc['poster'],
+                'category': doc['category']
             })
 
         return jsonify({
