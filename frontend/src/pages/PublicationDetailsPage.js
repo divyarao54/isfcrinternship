@@ -110,6 +110,24 @@ const PublicationDetailsPage = () => {
                                     <p>{publication.applicationNumber}</p>
                                 </div>
                             )}
+                            {publication.publicationDate && (
+                                <div className="info-section">
+                                    <h3>Publication Date</h3>
+                                    <p>{publication.publicationDate}</p>
+                                </div>
+                            )}
+                            {publication.filedOn && (
+                                <div className="info-section">
+                                    <h3>Filed On</h3>
+                                    <p>{publication.filedOn}</p>
+                                </div>
+                            )}
+                            {publication.grantedOn && (
+                                <div className="info-section">
+                                    <h3>Granted On</h3>
+                                    <p>{publication.grantedOn}</p>
+                                </div>
+                            )}
                         </>
                     ) : (
                         <>

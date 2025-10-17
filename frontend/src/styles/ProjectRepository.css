@@ -187,12 +187,12 @@
 }
 
 .submit-btn {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #182745;
   color: white;
   border: none;
   padding: 12px 24px;
   border-radius: 8px;
-  font-size: 1rem;
+  font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -426,6 +426,10 @@
   background: #b71c1c;
 }
 
+.pr-category-btn{
+  background-color: white;
+  background: white;
+}
 /* Responsive Design */
 @media (max-width: 900px) {
   .project-repository-container {
@@ -509,7 +513,7 @@
 
 /* Delete Project Button Styles */
 .delete-project-btn {
-  background: #f44336;
+  background: #2c3e50;
   color: white;
   border: none;
   padding: 6px 12px;
@@ -868,36 +872,6 @@
   font-weight: 400;
   margin-left: 8px;
 }
-
-.pr-category-links {
-  margin-left: 6px;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
-}
-
-.pr-category-btn:first-child{
-  width: -webkit-fill-available;
-}
-
-.pr-category-btn {
-  background: none !important;
-  border: none;
-  color: #444 !important;
-  cursor: pointer;
-  font-size: 0.9em;
-  text-align: left !important;
-  padding: 2px 0 !important;
-}
-
-.pr-category-btn:hover {
-  background-color: none !important;
-  color: #444 !important;
-  background: none !important;
-  text-decoration: underline;
-}
-
 
 /* Responsive adjustments for teacher filter */
 @media (max-width: 900px) {

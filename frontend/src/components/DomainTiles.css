@@ -202,7 +202,7 @@
 }
 
 .view-teacher-btn {
-  background: #1976d2;
+  background: #182745;
   color: white;
   border: none;
   padding: 6px 12px;
@@ -214,7 +214,7 @@
 }
 
 .view-teacher-btn:hover {
-  background: #1565c0;
+  background: #182745;
   transform: translateY(-1px);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }

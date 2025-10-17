@@ -1044,7 +1044,7 @@
 }
 
 /* Global Button Styles */
-button, .admin-buttons button, .admin-login-form button, .admin-account-buttons button, .admin-signup-form button, .admin-forgot-form button, .admin-reset-form button, .admin-entry-buttons button, .delete-btn, .confirm-delete-btn, .cancel-delete-btn, .view-pubs-btn, .back-btn, .show-more-btn, .show-less-btn, .retry-btn, .summarize-btn, .add-btn, .remove-btn, .submit-btn, .cancel-btn, .edit-btn, .logout-button, .change-password-button {
+.admin-buttons button, .admin-login-form button, .admin-account-buttons button, .admin-signup-form button, .admin-forgot-form button, .admin-reset-form button, .admin-entry-buttons button, .delete-btn, .confirm-delete-btn, .cancel-delete-btn, .view-pubs-btn, .back-btn, .show-more-btn, .show-less-btn, .retry-btn, .summarize-btn, .add-btn, .remove-btn, .submit-btn, .cancel-btn, .edit-btn, .logout-button, .change-password-button {
   background-color: #182745 !important;
   color: #fff !important;
   border: none;

@@ -178,9 +178,13 @@ const AdminPage = () => {
   const [bulkFile, setBulkFile] = useState(null);
   const [bulkUploading, setBulkUploading] = useState(false);
   const [bulkPreview, setBulkPreview] = useState([]);
+  const [bulkPublicationType, setBulkPublicationType] = useState('');
   const [showAwardModal, setShowAwardModal] = useState(false);
   const [isUploadingAward, setIsUploadingAward] = useState(false);
   const [showFundingModal, setShowFundingModal] = useState(false);
+  const [showManageFunds, setShowManageFunds] = useState(false);
+  const [funds, setFunds] = useState([]);
+  const [editingFund, setEditingFund] = useState(null);
 
   // Session timeout functionality (single timeout via refs)
   const timeoutRef = useRef(null);
@@ -348,6 +352,16 @@ const AdminPage = () => {
       setTeachers([]);
     }
     setIsLoadingTeachers(false);
+  };
+
+  const fetchFunds = async () => {
+    try {
+      const API_BASE = process.env.REACT_APP_API_URL || '';
+      const res = await axios.get(`${API_BASE}/api/funds`);
+      setFunds(res.data.funds || []);
+    } catch (e) {
+      setFunds([]);
+    }
   };
 
   // Fetch publications for a teacher
@@ -740,6 +754,7 @@ const AdminPage = () => {
   // Fetch teachers on mount for the add publication dropdown
   useEffect(() => {
     fetchTeachers();
+    fetchFunds();
   }, []);
 
   // Add activity listeners for session timeout
@@ -1133,7 +1148,7 @@ const AdminPage = () => {
               style={{ 
                 padding: '12px', 
                 borderRadius: '50%', 
-                background: '#1976d2', 
+                background: '#182745', 
                 color: 'white', 
                 border: 'none',
                 fontSize: '1.5rem',
@@ -1179,22 +1194,23 @@ const AdminPage = () => {
             <button onClick={() => { handleUpdateAll(); handleAdminActivity(); }} style={{ background: '#182745', color: 'white' }}>Update All</button>
             {/* Add actions */}
             <div className="add-actions" style={{ display: 'inline-block', marginLeft: 12 }}>
-              <button className="add-main-btn" onClick={() => setShowAddMenu(v => !v)} style={{backgroundColor: '#182745', color: 'white'}}>+ Add</button>
+              <button className="add-btn" onClick={() => setShowAddMenu(v => !v)} style={{backgroundColor: '#182745', color: 'white', transform: 'translateY(-5px)'}}>+ Add</button>
               {showAddMenu && (
                 <div className="add-menu">
-                  <button style={{zIndex: '10', position: 'relative'}} onClick={() => { setShowAddMenu(false); setShowTypeSelector(true); }}>+ Add Project (Individual)</button>
-                  <button style={{zIndex: '10', position: 'relative'}} onClick={() => { setShowAddMenu(false); setShowBulkModal(true); }}>+ Upload Excel (Bulk)</button>
-                  <button style={{zIndex: '10', position: 'relative'}}onClick={() => { setShowAddMenu(false); setShowAwardModal(true); }}>+ Add Award</button>
-                  <button style={{zIndex: '10', position: 'relative'}} onClick={() => { setShowAddMenu(false); setShowFundingModal(true); }}>+ Add Funding</button>
+                  {/*<button style={{zIndex: '10', position: 'relative'}} onClick={() => { setShowAddMenu(false); setShowTypeSelector(true); }}>+ Add Project (Individual)</button>*/}
+                  <button style={{zIndex: '10', position: 'relative', borderRadius: '0px'}} onClick={() => { setShowAddMenu(false); setShowBulkModal(true); }}>+ Upload Excel (Bulk)</button>
+                  <button style={{zIndex: '10', position: 'relative', borderRadius: '0px'}}onClick={() => { setShowAddMenu(false); setShowAwardModal(true); }}>+ Add Award</button>
+                  <button style={{zIndex: '10', position: 'relative', borderRadius: '0px'}} onClick={() => { setShowAddMenu(false); setShowFundingModal(true); }}>+ Add Funding</button>
+                  <button style={{zIndex: '10', position: 'relative', borderRadius: '0px'}} onClick={() => { setShowAddMenu(false); setShowManageFunds(true); fetchFunds(); }}>Manage Fundings</button>
                 </div>
               )}
             </div>
           </div>
           <div className="admin-account-buttons" style={{zIndex: '9'}}>
-            <button className="change-password-button" onClick={() => { setShowChangePassword(true); handleAdminActivity(); }} style={{ marginRight: 16, background: '#182745', color: 'white' }}>
+            <button onClick={() => { setShowChangePassword(true); handleAdminActivity(); }} style={{ marginRight: 16, background: '#182745', color: 'white' }}>
               Change Password
             </button>
-            <button className="logout-button" onClick={handleLogout} style={{ background: '#182745', color: 'white', zIndex: '9' }}>Logout</button>
+            <button onClick={handleLogout} style={{ background: '#182745', color: 'white', zIndex: '9' }}>Logout</button>
           </div>
           {status && <p className="status-text">{status}</p>}
           {addPubSuccess && <div style={{ color: 'green', marginTop: 8, fontSize: '0.9rem' }}>{addPubSuccess}</div>}
@@ -1296,7 +1312,7 @@ const AdminPage = () => {
                       style={{ 
                         padding: '8px 16px', 
                         borderRadius: '4px', 
-                        background: '#1976d2', 
+                        background: '#182745', 
                         color: 'white', 
                         border: 'none',
                         cursor: 'pointer',
@@ -1340,7 +1356,7 @@ const AdminPage = () => {
                 </div>
                 <div className="form-group">
                   <label>Category *</label>
-                  <select id="bulk-category" defaultValue="" onChange={() => {}}>
+                  <select id="bulk-category" /*defaultValue=""*/ value={bulkPublicationType} onChange={(e) => setBulkPublicationType(e.target.value)} required>
                     <option value="" disabled>Select Category</option>
                     <option value="Capstone">Capstone</option>
                     <option value="Summer Internship">Summer Internship</option>
@@ -1348,21 +1364,28 @@ const AdminPage = () => {
                 </div>
                 <input type="file" accept=".xlsx" onChange={(e) => setBulkFile(e.target.files?.[0] || null)} />
                 <div className="form-actions" style={{ marginTop: 16 }}>
-                  <button className="cancel-btn" onClick={() => { setShowBulkModal(false); setBulkFile(null); setBulkPreview([]); }}>Cancel</button>
-                  <button className="submit-btn" disabled={!bulkFile || bulkUploading} onClick={async () => {
+                  <button className="cancel-btn" onClick={() => { setShowBulkModal(false); setBulkFile(null); setBulkPreview([]); setBulkPublicationType(''); }}>Cancel</button>
+                  <button className="submit-btn" disabled={!bulkFile || bulkUploading || !bulkPublicationType} onClick={async () => {
                     if (!bulkFile) return;
                     try {
                       setBulkUploading(true);
                       const formData = new FormData();
                       formData.append('file', bulkFile);
-                      const categoryEl = document.getElementById('bulk-category');
-                      const category = categoryEl ? categoryEl.value : '';
+                      //const categoryEl = document.getElementById('bulk-category');
+                      //const category = /*categoryEl ? categoryEl.value : ''*/bulkPublicationType;
+                      const category = bulkPublicationType;
+                      console.log('DEBUG: Frontend category value:', category);
+                      console.log('DEBUG: bulkPublicationType state:', bulkPublicationType);
                       if (!category) {
                         alert('Please select a category (Capstone or Summer Internship).');
                         setBulkUploading(false);
                         return;
                       }
                       formData.append('category', category);
+                      console.log('DEBUG: FormData contents:');
+                      for (let [key, value] of formData.entries()) {
+                        console.log(`  ${key}: ${value}`);
+                      }
                       const API_BASE = process.env.REACT_APP_API_URL || '';
                       const resp = await axios.post(`${API_BASE}/api/yearly-projects/bulk`, formData, {
                         headers: { 'Content-Type': 'multipart/form-data' }
@@ -1370,6 +1393,9 @@ const AdminPage = () => {
                       if (resp.data && resp.data.success) {
                         setBulkPreview(resp.data.preview || []);
                         alert(`Imported ${(resp.data.inserted || []).length} group(s). Skipped ${(resp.data.skipped || []).length}.`);
+                        // Reset form after successful upload
+                        setBulkFile(null);
+                        setBulkPublicationType('');
                       } else {
                         alert('Import failed');
                       }
@@ -1409,6 +1435,111 @@ const AdminPage = () => {
                 </div>
                 <div style={{ padding: 20 }}>
                   <FundingForm onClose={() => setShowFundingModal(false)} />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Manage Funds Modal */}
+          {showManageFunds && (
+            <div className="modal-overlay" onClick={() => { setShowManageFunds(false); setEditingFund(null); }}>
+              <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                <div className="modal-header">
+                  <h2>Manage Fundings</h2>
+                  <button className="close-btn" onClick={() => { setShowManageFunds(false); setEditingFund(null); }}>×</button>
+                </div>
+                <div style={{ padding: 20 }}>
+                  {!editingFund ? (
+                    <div style={{ maxHeight: '60vh', overflowY: 'auto' }}>
+                      {funds.length === 0 ? (
+                        <div style={{ color: '#666' }}>No funding records found.</div>
+                      ) : (
+                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                          <thead>
+                            <tr style={{ background: '#f5f5f5' }}>
+                              <th style={{ textAlign: 'left', padding: 8 }}>Teacher</th>
+                              <th style={{ textAlign: 'left', padding: 8 }}>Project</th>
+                              <th style={{ textAlign: 'left', padding: 8 }}>Agency</th>
+                              <th style={{ textAlign: 'left', padding: 8 }}>Year</th>
+                              <th style={{ textAlign: 'left', padding: 8 }}>Revenue</th>
+                              <th style={{ textAlign: 'left', padding: 8 }}>Status</th>
+                              <th style={{ textAlign: 'left', padding: 8 }}></th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {funds.map((f) => (
+                              <tr key={f._id}>
+                                <td style={{ padding: 8, borderBottom: '1px solid #eee' }}>{f.teacherConsultant}</td>
+                                <td style={{ padding: 8, borderBottom: '1px solid #eee' }}>{f.consultantAgency}</td>
+                                <td style={{ padding: 8, borderBottom: '1px solid #eee' }}>{f.sponsoringAgency}</td>
+                                <td style={{ padding: 8, borderBottom: '1px solid #eee' }}>{f.year}</td>
+                                <td style={{ padding: 8, borderBottom: '1px solid #eee' }}>{(typeof f.revenue === 'number' ? f.revenue : parseFloat(f.revenue) || 0).toLocaleString()}</td>
+                                <td style={{ padding: 8, borderBottom: '1px solid #eee' }}>{f.status}</td>
+                                <td style={{ padding: 8, borderBottom: '1px solid #eee' }}>
+                                  <button className="submit-btn" onClick={() => setEditingFund(f)} style={{ padding: '6px 10px' }}>Edit</button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      )}
+                    </div>
+                  ) : (
+                    <form onSubmit={async (e) => {
+                      e.preventDefault();
+                      try {
+                        const API_BASE = process.env.REACT_APP_API_URL || '';
+                        const payload = {
+                          teacherConsultant: editingFund.teacherConsultant,
+                          consultantAgency: editingFund.consultantAgency,
+                          sponsoringAgency: editingFund.sponsoringAgency,
+                          year: editingFund.year,
+                          revenue: editingFund.revenue,
+                          status: editingFund.status,
+                          imageUrl: editingFund.imageUrl || null,
+                        };
+                        await axios.put(`${API_BASE}/api/funds/${editingFund._id}`, payload, { headers: { 'Content-Type': 'application/json' } });
+                        await fetchFunds();
+                        alert('Funding updated successfully');
+                        setEditingFund(null);
+                      } catch (err) {
+                        alert(err?.response?.data?.error || 'Failed to update funding');
+                      }
+                    }} className="add-project-form">
+                      <div className="form-group">
+                        <label>Teacher Consultant *</label>
+                        <input value={editingFund.teacherConsultant} onChange={e => setEditingFund({ ...editingFund, teacherConsultant: e.target.value })} required />
+                      </div>
+                      <div className="form-group">
+                        <label>Name of Consultancy Project *</label>
+                        <input value={editingFund.consultantAgency} onChange={e => setEditingFund({ ...editingFund, consultantAgency: e.target.value })} required />
+                      </div>
+                      <div className="form-group">
+                        <label>Consulting or Sponsoring Agency *</label>
+                        <input value={editingFund.sponsoringAgency} onChange={e => setEditingFund({ ...editingFund, sponsoringAgency: e.target.value })} required />
+                      </div>
+                      <div className="form-group">
+                        <label>Year *</label>
+                        <input type="number" value={editingFund.year} onChange={e => setEditingFund({ ...editingFund, year: e.target.value })} required />
+                      </div>
+                      <div className="form-group">
+                        <label>Generated Revenue (optional)</label>
+                        <input type="number" step="0.01" value={editingFund.revenue ?? ''} onChange={e => setEditingFund({ ...editingFund, revenue: e.target.value })} />
+                      </div>
+                      <div className="form-group">
+                        <label>Project Status *</label>
+                        <input value={editingFund.status} onChange={e => setEditingFund({ ...editingFund, status: e.target.value })} required />
+                      </div>
+                      <div className="form-group">
+                        <label>Image URL (optional)</label>
+                        <input value={editingFund.imageUrl ?? ''} onChange={e => setEditingFund({ ...editingFund, imageUrl: e.target.value })} placeholder="https://..." />
+                      </div>
+                      <div className="form-actions">
+                        <button type="button" className="cancel-btn" onClick={() => setEditingFund(null)}>Cancel</button>
+                        <button type="submit" className="submit-btn">Save</button>
+                      </div>
+                    </form>
+                  )}
                 </div>
               </div>
             </div>

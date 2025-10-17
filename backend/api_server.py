@@ -185,6 +185,64 @@ def list_funding_records():
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/api/funds/<fund_id>', methods=['PUT'])
+def update_funding_record(fund_id):
+    """Update an existing funding/consultancy record in the 'funds' collection."""
+    try:
+        db = db_manager.connect()
+        funds_collection = db['funds']
+
+        # Validate fund id
+        try:
+            _ = ObjectId(fund_id)
+        except Exception:
+            return jsonify({'error': 'Invalid fund id'}), 400
+
+        data = request.get_json(force=True)
+
+        # Required fields for an update
+        required_fields = ['teacherConsultant', 'consultantAgency', 'sponsoringAgency', 'year', 'status']
+        for f in required_fields:
+            if not data.get(f):
+                return jsonify({'error': f'Missing required field: {f}'}), 400
+
+        # Coerce year and revenue
+        try:
+            year_val = int(str(data.get('year')))
+        except Exception:
+            return jsonify({'error': 'year must be a number'}), 400
+
+        revenue_val = data.get('revenue')
+        revenue = None
+        if revenue_val is not None and str(revenue_val).strip() != '':
+            try:
+                revenue = float(str(revenue_val))
+            except Exception:
+                return jsonify({'error': 'revenue must be a number'}), 400
+
+        update_doc = {
+            'teacherConsultant': (data.get('teacherConsultant') or '').strip(),
+            'consultantAgency': (data.get('consultantAgency') or '').strip(),
+            'sponsoringAgency': (data.get('sponsoringAgency') or '').strip(),
+            'year': year_val,
+            'revenue': revenue,
+            'status': (data.get('status') or '').strip(),
+            'imageUrl': ((data.get('imageUrl') or '').strip() or None),
+            'updatedAt': datetime.utcnow().isoformat()
+        }
+
+        result = funds_collection.update_one({'_id': ObjectId(fund_id)}, {'$set': update_doc})
+        if result.matched_count == 0:
+            return jsonify({'error': 'Funding record not found'}), 404
+
+        # Return updated doc
+        doc = funds_collection.find_one({'_id': ObjectId(fund_id)})
+        doc['_id'] = str(doc['_id'])
+        return jsonify({'success': True, 'fund': doc}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 # Task management for background processes
 task_store = {}
 task_lock = threading.Lock()
@@ -834,11 +892,11 @@ def search_papers():
 
         final_results = unique_results[:max(1, limit)]
 
-        return jsonify({
-            'query': query,
+                return jsonify({
+                    'query': query,
             'total_results': len(final_results),
             'results': final_results
-        }), 200
+                }), 200
             
     except Exception as error:
         return jsonify({'error': 'Error performing search', 'message': str(error)}), 500
@@ -1737,12 +1795,14 @@ def add_yearly_projects_bulk():
         if file.filename == '':
             return jsonify({'error': 'Empty filename'}), 400
 
-        # Read and validate category from form data
-        category = (request.form.get('category') or '').strip()
-        valid_categories = {'Capstone', 'Summer Internship'}
-        if category not in valid_categories:
-            return jsonify({'error': 'Invalid or missing category. Choose Capstone or Summer Internship.'}), 400
-
+        category = request.form.get('category')
+        print(f"DEBUG: Bulk upload category received: '{category}'")
+        print(f"DEBUG: Category type: {type(category)}")
+        print(f"DEBUG: Form data keys: {list(request.form.keys())}")
+        if not category or category not in ['Capstone', 'Summer Internship']:
+            print(f"DEBUG: Category validation failed - category: '{category}'")
+            return jsonify({'error': 'Missing or invalid category field. Must be "Capstone" or "Summer Internship"'}), 400
+        print(f"DEBUG: Category validation passed: '{category}'")
         # Read workbook in memory
         data = file.read()
         wb = load_workbook(filename=io.BytesIO(data), read_only=True, data_only=True)
@@ -1826,18 +1886,21 @@ def add_yearly_projects_bulk():
         skipped = []
         preview = []
         for gid, g in groups.items():
+            print(f"DEBUG: Processing group {gid}, category variable: '{category}'")
             doc = {
                 'year': g['year'] if isinstance(g['year'], int) else int(str(g['year']) or 0),
                 'teacherName': g['mentor'],
                 'projectName': g['project_title'],
                 'projectDescription': g['project_description'],
+                'category': category,
                 'students': g['students'],
                 'report': g['report'],
                 'poster': g['poster'],
-                'category': category,
                 'createdAt': datetime.utcnow().isoformat(),
                 'groupId': gid
             }
+            print(f"DEBUG: Created document with category: '{doc.get('category')}'")
+            print(f"DEBUG: Full document: {doc}")
             # Skip duplicates
             existing = projects_collection.find_one({
                 'year': doc['year'],
@@ -1847,7 +1910,14 @@ def add_yearly_projects_bulk():
             if existing:
                 skipped.append({'groupId': gid, 'reason': 'duplicate', 'projectId': str(existing.get('_id'))})
                 continue
+            print(f"DEBUG: Bulk inserting project with category: '{doc.get('category')}'")
             res = projects_collection.insert_one(doc)
+            print(f"DEBUG: Bulk project inserted with ID: {res.inserted_id}")
+            
+            # Verify what was actually inserted
+            inserted_doc = projects_collection.find_one({'_id': res.inserted_id})
+            print(f"DEBUG: Verifying inserted document category: '{inserted_doc.get('category') if inserted_doc else 'NOT_FOUND'}'")
+            print(f"DEBUG: Inserted document keys: {list(inserted_doc.keys()) if inserted_doc else 'NOT_FOUND'}")
             inserted.append(str(res.inserted_id))
             preview.append({
                 '_id': str(res.inserted_id),
@@ -1855,10 +1925,10 @@ def add_yearly_projects_bulk():
                 'teacherName': doc['teacherName'],
                 'projectName': doc['projectName'],
                 'projectDescription': doc['projectDescription'],
+                'category': doc['category'],
                 'students': doc['students'],
                 'report': doc['report'],
-                'poster': doc['poster'],
-                'category': doc['category']
+                'poster': doc['poster']
             })
 
         return jsonify({
@@ -1885,13 +1955,22 @@ def add_yearly_project():
             if not data.get(field):
                 return jsonify({'error': f'Missing required field: {field}'}), 400
         
+        # Validate category field
+        category = data.get('category')
+        print(f"DEBUG: Individual project category received: '{category}'")
+        if not category or category not in ['Capstone', 'Summer Internship']:
+            return jsonify({'error': 'Missing or invalid category field. Must be "Capstone" or "Summer Internship"'}), 400
+        
         # Create project document
         project = {
             'year': int(data['year']),
             'teacherName': data['teacherName'],
             'projectName': data['projectName'],
             'projectDescription': data['projectDescription'],
+            'category': category,
             'students': data.get('students'),
+            'report': data.get('report', ''),
+            'poster': data.get('poster', ''),
             'createdAt': datetime.utcnow().isoformat()
         }
         
@@ -1913,12 +1992,14 @@ def add_yearly_project():
             return jsonify({'error': 'Duplicate project exists', 'projectId': str(existing.get('_id'))}), 409
         
         # Insert the project
+        print(f"DEBUG: Inserting project with category: '{project.get('category')}'")
         result = projects_collection.insert_one(project)
-        return jsonify({
-            'success': True,
-            'message': 'Project added successfully',
-            'projectId': str(result.inserted_id)
-        }), 201
+        print(f"DEBUG: Project inserted with ID: {result.inserted_id}")
+            return jsonify({
+                'success': True,
+                'message': 'Project added successfully',
+                'projectId': str(result.inserted_id)
+            }), 201
             
     except Exception as error:
         return jsonify({'error': str(error)}), 500
@@ -1945,6 +2026,9 @@ def update_yearly_project(project_id):
             'projectName': data['projectName'],
             'projectDescription': data['projectDescription'],
             'students': data.get('students'),
+            'report': data.get('report'),
+            'poster': data.get('poster'),
+            'category': data.get('category'),
             'updatedAt': datetime.utcnow().isoformat()
         }
         
@@ -2031,6 +2115,54 @@ def test_delete_endpoint():
         }), 200
     except Exception as error:
         return jsonify({'error': str(error)}), 500
+
+@app.route('/api/debug/projects-without-category', methods=['GET'])
+def debug_projects_without_category():
+    """Debug endpoint to check projects without category field"""
+    try:
+        db = db_manager.connect()
+        projects_collection = db['yearly_projects']
+        
+        # Find projects without category field
+        projects_without_category = list(projects_collection.find({'category': {'$exists': False}}))
+        projects_with_empty_category = list(projects_collection.find({'category': {'$in': [None, '']}}))
+        
+        return jsonify({
+            'projects_without_category': len(projects_without_category),
+            'projects_with_empty_category': len(projects_with_empty_category),
+            'sample_without': projects_without_category[:3] if projects_without_category else [],
+            'sample_empty': projects_with_empty_category[:3] if projects_with_empty_category else []
+        }), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/migrate/projects-add-category', methods=['POST'])
+def migrate_projects_add_category():
+    """Migration endpoint to add default category to existing projects"""
+    try:
+        db = db_manager.connect()
+        projects_collection = db['yearly_projects']
+        
+        # Update projects without category field to have default 'Capstone' category
+        result = projects_collection.update_many(
+            {'category': {'$exists': False}},
+            {'$set': {'category': 'Capstone'}}
+        )
+        
+        # Also update projects with empty/null category
+        result2 = projects_collection.update_many(
+            {'category': {'$in': [None, '']}},
+            {'$set': {'category': 'Capstone'}}
+        )
+        
+        return jsonify({
+            'success': True,
+            'updated_missing_category': result.modified_count,
+            'updated_empty_category': result2.modified_count,
+            'total_updated': result.modified_count + result2.modified_count
+        }), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/yearly-projects/<project_id>', methods=['DELETE'])
 def delete_yearly_project(project_id):

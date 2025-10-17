@@ -234,7 +234,7 @@ const IndividualTeacherPage = () => {
                         <div className="drilldown-overlay">
                           <div className="drilldown-publication-section">
                             <button onClick={() => setDrillDownView(null)} className="back-button" style={{
-                                background: '#1976d2',
+                                background: '#182745',
                                 color: 'white',
                                 border: 'none',
                                 padding: '8px 16px',

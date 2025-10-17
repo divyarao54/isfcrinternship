@@ -27,6 +27,7 @@ const Navbar = () => {
           <div className="nav-logo">
             <Link to="/home">
               <img src="/ISFCR_logo.png" alt="ISFCR Logo" className="logo-img" />
+              <img src="/IOT_Logo.jpg" alt="IOT Logo" className="logo-img"/>
             </Link>
           </div>
           <form onSubmit={handleSearch} className="search-form">
@@ -68,8 +69,8 @@ const Navbar = () => {
             </Link>
           </li>
           <li className="nav-item">
-            <Link to="/faq" className="nav-link">
-              FAQs
+            <Link to="/about" className="nav-link">
+              About
             </Link>
           </li>
         </ul>

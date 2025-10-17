@@ -1,0 +1,14 @@
+.creator-img-container{
+    display: flex;
+    align-items: center;
+
+    width: 100px;
+    height: 150px;
+}
+
+.creator-card, .mentor-card{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}

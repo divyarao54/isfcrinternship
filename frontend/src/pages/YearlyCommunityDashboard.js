@@ -52,9 +52,310 @@ const SummaryChart = ({ data, onBarClick }) => {
     );
 };
 
+// A component for patent status breakdown (first level)
+const PatentStatusPopup = ({ publications, onClose }) => {
+    const [selectedStatus, setSelectedStatus] = useState(null);
+    const navigate = useNavigate();
+
+    // Calculate total patent statistics across all years
+    const calculateTotalPatentStats = () => {
+        const totalStats = { published: 0, filed: 0, granted: 0 };
+        
+        publications.forEach(pub => {
+            if (pub.patent) {
+                // Check for published date
+                if (pub.publicationDate) {
+                    totalStats.published += 1;
+                }
+                
+                // Check for filed date
+                if (pub.filedOn) {
+                    totalStats.filed += 1;
+                }
+                
+                // Check for granted date
+                if (pub.grantedOn) {
+                    totalStats.granted += 1;
+                }
+            }
+        });
+        
+        return totalStats;
+    };
+
+    const totalStats = calculateTotalPatentStats();
+
+    if (selectedStatus) {
+        return (
+            <YearlyPatentStatusPopup 
+                publications={publications}
+                selectedStatus={selectedStatus}
+                onBack={() => setSelectedStatus(null)}
+                onClose={onClose}
+            />
+        );
+    }
+
+    const patentStatusColors = {
+        published: '#FFA500',
+        filed: '#800080',
+        granted: '#4CAF50'
+    };
+
+    // Transform data for separate bars
+    const chartData = [
+        { name: 'Published', value: totalStats.published, fill: patentStatusColors.published },
+        { name: 'Filed', value: totalStats.filed, fill: patentStatusColors.filed },
+        { name: 'Granted', value: totalStats.granted, fill: patentStatusColors.granted }
+    ];
+
+    return (
+        <div className="drilldown-overlay" onClick={onClose}>
+            <div className="drilldown-publication-section" onClick={e => e.stopPropagation()}>
+                <button className="back-button" onClick={onClose} style={{ position: 'absolute', top: 16, right: 16, zIndex: 1200 }}>
+                    X
+                </button>
+                <h2 className="chart-title">Patent Statistics</h2>
+                <div style={{ minHeight: 400 }}>
+                    <ResponsiveContainer width="100%" height={400}>
+                        <BarChart data={chartData} layout="vertical" margin={{ left: 80, right: 20, top: 20, bottom: 20 }} onClick={e => {
+                            if (e && e.activeLabel) setSelectedStatus(e.activeLabel.toLowerCase());
+                        }}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis type="number" allowDecimals={false} />
+                            <YAxis dataKey="name" type="category" width={80} />
+                            <Tooltip />
+                            <Bar dataKey="value" cursor="pointer" />
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// A component for yearly breakdown of a specific patent status
+const YearlyPatentStatusPopup = ({ publications, selectedStatus, onBack, onClose }) => {
+    const [selectedYear, setSelectedYear] = useState(null);
+    const navigate = useNavigate();
+    const dateKey = {
+        published: 'publicationDate',
+        filed: 'filedOn',
+        granted: 'grantedOn'
+    }[selectedStatus];
+    // Calculate yearly counts for the selected status
+    const calculateYearlyStatusCounts = () => {
+        const yearStats = {};
+        
+        publications.forEach(pub => {
+            if (pub.patent && pub[dateKey]) {
+                try{
+                    const year = new Date(pub[dateKey]).getFullYear();
+                    if(year){
+                        if(!yearStats[year]){
+                            yearStats[year] = {
+                                year: year,
+                                count: 0
+                            };
+                        }
+                        yearStats[year].count += 1;
+                    }
+                }
+                catch(err){
+                    console.log('Invalid Date format for patent:', pub[dateKey], err);
+                }
+            }
+        });
+        
+        return Object.values(yearStats).map(stat => ({
+            ...stat,
+            year: String(stat.year)
+        })).sort((a, b) => Number(a.year) - Number(b.year));
+    };
+
+    const yearlyData = calculateYearlyStatusCounts();
+
+    if (selectedYear) {
+        return (
+            <PatentListPopup
+                publications={publications}
+                selectedYear={selectedYear}
+                selectedStatus={selectedStatus}
+                onBack={() => setSelectedYear(null)}
+                onClose={onClose}
+            />
+        );
+    }
+
+    const statusLabels = {
+        published: 'Published',
+        filed: 'Filed',
+        granted: 'Granted'
+    };
+
+    const patentStatusColors = {
+        published: '#FFA500',
+        filed: '#800080',
+        granted: '#4CAF50'
+    };
+
+    return (
+        <div className="drilldown-overlay" onClick={onClose}>
+            <div className="drilldown-publication-section" onClick={e => e.stopPropagation()}>
+                <button className="back-button" onClick={onBack} style={{ position: 'absolute', top: 16, right: 16, zIndex: 1200 }}>
+                    ← Back to Patent Stats
+                </button>
+                <h2 className="chart-title">{statusLabels[selectedStatus]} Patents by Year</h2>
+                <div style={{ minHeight: 400 }}>
+                    <ResponsiveContainer width="100%" height={400}>
+                        <BarChart data={yearlyData} onClick={e => {
+                            if (e && e.activeLabel) setSelectedYear(e.activeLabel);
+                        }}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="year" angle={-45} textAnchor="end" height={60} />
+                            <YAxis allowDecimals={false} />
+                            <Tooltip />
+                            <Bar dataKey="count" fill={patentStatusColors[selectedStatus]} cursor="pointer" />
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// A component for displaying patent list filtered by year and status
+const PatentListPopup = ({ publications, selectedYear, selectedStatus, onBack, onClose }) => {
+    const navigate = useNavigate();
+
+    const handlePatentClick = (patent) => {
+        const teacherName = patent.teacherName;
+        if (teacherName) {
+            const publicationId = encodeURIComponent(patent.title);
+            navigate(`/teachers/${encodeURIComponent(teacherName)}/publications/${publicationId}`);
+        }
+    };
+
+    const dateKey = {
+        published: 'publicationDate',
+        filed: 'filedOn',
+        granted: 'grantedOn'
+    }[selectedStatus];
+
+
+    const filteredPatents = publications.filter(pub => {
+        if (!pub.patent || !pub[dateKey]) return false;
+
+        try {
+            const pubYear = new Date(pub[dateKey]).getFullYear();
+            
+            return String(pubYear) === String(selectedYear);
+        } catch (e) {
+            return false;
+        }
+    });
+
+    const patentStatusColors = {
+        published: '#FFA500',
+        filed: '#800080',
+        granted: '#4CAF50'
+    };
+
+    const statusLabels = {
+        published: 'Published',
+        filed: 'Filed',
+        granted: 'Granted'
+    };
+
+    return (
+        <div className="drilldown-overlay" onClick={onClose}>
+            <div className="drilldown-publication-section" onClick={e => e.stopPropagation()}>
+                <button className="back-button" onClick={onBack} style={{ position: 'absolute', top: 16, right: 16, zIndex: 1200 }}>
+                    ← Back to {selectedYear}
+                </button>
+                <h2 className="chart-title">{statusLabels[selectedStatus]} Patents in {selectedYear}</h2>
+                <div style={{ minHeight: 400 }}>
+                    {filteredPatents.length === 0 ? (
+                        <div style={{ padding: '20px', color: '#888' }}>No {selectedStatus} patents found for {selectedYear}.</div>
+                    ) : (
+                        <ul style={{ padding: 0, listStyle: 'none' }}>
+                            {filteredPatents.map((patent, idx) => (
+                                <li 
+                                    key={idx} 
+                                    style={{ 
+                                        background: '#fff',
+                                        marginBottom: '12px',
+                                        padding: '12px',
+                                        borderRadius: '6px',
+                                        border: '1px solid #eee',
+                                        boxShadow: '0 1px 2px rgba(0,0,0,0.07)',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s ease'
+                                    }}
+                                    onClick={() => handlePatentClick(patent)}
+                                    onMouseEnter={(e) => {
+                                        e.target.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+                                        e.target.style.transform = 'translateY(-1px)';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.target.style.boxShadow = '0 1px 2px rgba(0,0,0,0.07)';
+                                        e.target.style.transform = 'translateY(0)';
+                                    }}
+                                >
+                                    <div><strong>Title:</strong> {patent.title}</div>
+                                    {patent.inventors && <div><strong>Inventors:</strong> {patent.inventors}</div>}
+                                    <div style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
+                                        {patent.publicationDate && (
+                                            <span style={{ 
+                                                background: patentStatusColors.published, 
+                                                color: 'white', 
+                                                padding: '2px 6px', 
+                                                borderRadius: '3px', 
+                                                fontSize: '12px' 
+                                            }}>
+                                                Published: {patent.publicationDate}
+                                            </span>
+                                        )}
+                                        {patent.filedOn && (
+                                            <span style={{ 
+                                                background: patentStatusColors.filed, 
+                                                color: 'white', 
+                                                padding: '2px 6px', 
+                                                borderRadius: '3px', 
+                                                fontSize: '12px' 
+                                            }}>
+                                                Filed: {patent.filedOn}
+                                            </span>
+                                        )}
+                                        {patent.grantedOn && (
+                                            <span style={{ 
+                                                background: patentStatusColors.granted, 
+                                                color: 'white', 
+                                                padding: '2px 6px', 
+                                                borderRadius: '3px', 
+                                                fontSize: '12px' 
+                                            }}>
+                                                Granted: {patent.grantedOn}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div style={{ fontSize: '0.9em', color: '#666', marginTop: '8px' }}>
+                                        Click to view details
+                                    </div>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};
+
 // A component for the detailed year-wise drill-down chart
 const DrillDownChart = ({ data, category, onBack, publications, onClose }) => {
     const [selectedYear, setSelectedYear] = useState(null);
+    const [showPatentStats, setShowPatentStats] = useState(false);
     const navigate = useNavigate();
 
     // Helper function to check if two titles are similar
@@ -135,6 +436,16 @@ const DrillDownChart = ({ data, category, onBack, publications, onClose }) => {
             navigate(`/teachers/${encodeURIComponent(teacherName)}/publications/${publicationId}`);
         }
     };
+
+    // Show patent status popup if patents category is selected
+    if (category === 'patents' && !selectedYear) {
+        return (
+            <PatentStatusPopup 
+                publications={publications} 
+                onClose={onClose} 
+            />
+        );
+    }
 
     return (
         <div className="drilldown-overlay" onClick={onClose}>
@@ -607,7 +918,7 @@ const FundingSummary = ({ funds }) => {
                             onClick={() => setOpen(true)}
                             style={{
                                 marginLeft: 'auto',
-                                background: '#1976d2',
+                                background: '#182745',
                                 color: 'white',
                                 border: 'none',
                                 padding: '8px 12px',

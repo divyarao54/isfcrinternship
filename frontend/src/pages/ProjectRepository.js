@@ -23,6 +23,8 @@ const ProjectRepository = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [editingProject, setEditingProject] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [selectedYear, setSelectedYear] = useState('');
   const [selectedTeacher, setSelectedTeacher] = useState('');
   const [projectName, setProjectName] = useState('');
@@ -32,7 +34,7 @@ const ProjectRepository = () => {
   const [activeYear, setActiveYear] = useState(new Date().getFullYear());
   const [selectedTeacherFilter, setSelectedTeacherFilter] = useState('');
   const [showTeacherFilter, setShowTeacherFilter] = useState(false);
-  
+
   useEffect(() => {
     fetchProjects();
     fetchTeachers();
@@ -222,6 +224,47 @@ const ProjectRepository = () => {
     setProjectToDelete(null);
   };
 
+  const openEditModal = (project) => {
+    // Normalize students to a comma-separated string if array
+    const normalized = {
+      ...project,
+      studentsInput: Array.isArray(project.students)
+        ? project.students.filter(s => s && (s.name || s.srn)).map(s => `${s.name || ''}${s.srn ? ` (${s.srn})` : ''}`).join(', ')
+        : (project.students || ''),
+    };
+    setEditingProject(normalized);
+    setShowEditModal(true);
+  };
+
+  const closeEditModal = () => {
+    setShowEditModal(false);
+    setEditingProject(null);
+  };
+
+  const handleUpdateProject = async (e) => {
+    e.preventDefault();
+    if (!editingProject || !editingProject._id) return;
+    try {
+      const payload = {
+        year: editingProject.year,
+        teacherName: editingProject.teacherName,
+        projectName: editingProject.projectName,
+        projectDescription: editingProject.projectDescription,
+        report: editingProject.report || '',
+        poster: editingProject.poster || '',
+        category: editingProject.category || '',
+        // Keep existing students shape as-is if array; if edited as string keep it string
+        students: Array.isArray(editingProject.students) ? editingProject.students : (editingProject.studentsInput || ''),
+      };
+      await axios.put(`${API_BASE}/api/yearly-projects/${editingProject._id}`, payload, { headers: { 'Content-Type': 'application/json' } });
+      await fetchProjects();
+      alert('Project updated successfully');
+      closeEditModal();
+    } catch (err) {
+      alert(err?.response?.data?.error || 'Failed to update project');
+    }
+  };
+
   const clearTeacherFilter = () => {
     setSelectedTeacherFilter('');
     setShowTeacherFilter(false);
@@ -263,7 +306,7 @@ const ProjectRepository = () => {
                 ✕
               </button>
             )}
-          </div>
+            </div>
         </div>
       </div>
 
@@ -481,33 +524,33 @@ const ProjectRepository = () => {
               </span>
             )}
           </h2>
-          {projects.length === 0 ? (
-            <div className="no-projects">
-              <p>No projects found. Click "Add Project" to get started.</p>
-            </div>
+        {projects.length === 0 ? (
+          <div className="no-projects">
+            <p>No projects found. Click "Add Project" to get started.</p>
+          </div>
           ) : getFilteredProjects().length === 0 ? (
             <div className="no-projects">
               <p>No projects found for the selected teacher.</p>
               <button className="clear-filter-btn" onClick={clearTeacherFilter}>
                 Clear Filter
               </button>
-            </div>
-          ) : (
-            <div className="yearly-projects">
-              {getAvailableYears().map(year => (
+          </div>
+        ) : (
+          <div className="yearly-projects">
+            {getAvailableYears().map(year => (
                 <div key={year} id={`year-${year}`} className="year-section">
-                  <div
-                    className="year-header"
-                    onClick={() => toggleYearExpansion(year)}
-                  >
-                    <h3>{year}</h3>
+                <div 
+                  className="year-header"
+                  onClick={() => toggleYearExpansion(year)}
+                >
+                  <h3>{year}</h3>
                     {/*<span className="project-count">
-                      {getProjectsByYear(year).length} project{getProjectsByYear(year).length !== 1 ? 's' : ''}
+                    {getProjectsByYear(year).length} project{getProjectsByYear(year).length !== 1 ? 's' : ''}
                     </span>*/}
                     <span className={`expand-icon ${expandedYears.has(year) ? 'expanded' : ''}`}>▼</span>
-                  </div>
-                  {expandedYears.has(year) && (
-                    <div className="projects-list">
+                </div>
+                {expandedYears.has(year) && (
+                  <div className="projects-list">
                       {/* Capstone Section */}
                       <div className="category-section" id={`year-${year}-capstone`}>
                         <div className="category-header">Capstone</div>
@@ -516,12 +559,12 @@ const ProjectRepository = () => {
                         ) : (
                           getProjectsByYearAndCategory(year, 'Capstone').map((project, index) => (
                             <div key={`cap-${index}`} className="project-card">
-                              <div className="project-header">
-                                <h4 className="project-title">{project.projectName}</h4>
-                                <span className="project-teacher">{project.teacherName}</span>
-                              </div>
+                        <div className="project-header">
+                          <h4 className="project-title">{project.projectName}</h4>
+                          <span className="project-teacher">{project.teacherName}</span>
+                        </div>
                               <span className="project-description">{project.projectDescription} </span>
-                              {project.students && (
+                        {project.students && (
                                 <span className="project-students">
                                   <strong>By</strong>{' '}
                                   {Array.isArray(project.students)
@@ -543,11 +586,14 @@ const ProjectRepository = () => {
                                 </span>
                               )}
                               <div className="project-meta">
-                                {isAdmin && (
-                                  <button className="delete-project-btn" onClick={() => openDeleteModal(project)} title="Delete Project">🗑️ Delete</button>
-                                )}
+                            {isAdmin && (
+                              <div style={{ display: 'flex', gap: 8 }}>
+                                <button className="delete-project-btn" onClick={() => openEditModal(project)} title="Edit Project">✏️ Edit</button>
+                                <button className="delete-project-btn" onClick={() => openDeleteModal(project)} title="Delete Project">🗑️ Delete</button>
                               </div>
-                            </div>
+                            )}
+                              </div>
+                          </div>
                           ))
                         )}
                       </div>
@@ -585,28 +631,31 @@ const ProjectRepository = () => {
                                     <a href={project.poster} target="_blank" rel="noreferrer" style={{ textDecoration: 'underline solid #000000', textUnderlineOffset: '3px' }}>poster</a>
                                   )}
                                 </span>
-                              )}
-                              <div className="project-meta">
+                        )}
+                        <div className="project-meta">
                                 {isAdmin && (
-                                  <button className="delete-project-btn" onClick={() => openDeleteModal(project)} title="Delete Project">🗑️ Delete</button>
+                                  <div style={{ display: 'flex', gap: 8 }}>
+                                    <button className="delete-project-btn" onClick={() => openEditModal(project)} title="Edit Project">✏️ Edit</button>
+                                    <button className="delete-project-btn" onClick={() => openDeleteModal(project)} title="Delete Project">🗑️ Delete</button>
+                                  </div>
                                 )}
                               </div>
-                            </div>
+                        </div>
                           ))
                         )}
                       </div>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
         </div>
         <div className="pr-sidebar">
         {getAvailableYears().map(year => (
           <div key={year} className="pr-year-link">
             <span 
-              className={`pr-year-line ${activeYear === year ? 'active' : ''}`} 
+              className={`pr-year-line ${(activeYear === year && expandedYears.has(year)) ? 'active' : ''}`} 
               onClick={() => handleYearClick(year)}
             />
             <button
@@ -625,7 +674,7 @@ const ProjectRepository = () => {
             </button>
 
             {/* Show categories only for the active year */}
-            {activeYear === year && (
+            {activeYear === year && expandedYears.has(year) && (
               <div className="pr-category-links">
                 <button
                   className="pr-category-btn"
@@ -649,8 +698,7 @@ const ProjectRepository = () => {
             )}
           </div>
         ))}
-      </div>
-
+        </div>
       </div>
 
       {/* Delete Project Modal */}
@@ -661,6 +709,59 @@ const ProjectRepository = () => {
         onDeleteProject={handleDeleteProject}
         isLoading={isDeleting}
       />
+      {/* Edit Project Modal */}
+      {showEditModal && editingProject && (
+        <div className="modal-overlay" onClick={closeEditModal}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Edit Project</h2>
+              <button className="close-btn" onClick={closeEditModal}>×</button>
+            </div>
+            <form onSubmit={handleUpdateProject} className="add-project-form">
+              <div className="form-group">
+                <label>Year *</label>
+                <input type="number" value={editingProject.year} onChange={e => setEditingProject({ ...editingProject, year: parseInt(e.target.value || 0, 10) })} required />
+              </div>
+              <div className="form-group">
+                <label>Teacher *</label>
+                <input value={editingProject.teacherName} onChange={e => setEditingProject({ ...editingProject, teacherName: e.target.value })} required />
+              </div>
+              <div className="form-group">
+                <label>Project Name *</label>
+                <input value={editingProject.projectName} onChange={e => setEditingProject({ ...editingProject, projectName: e.target.value })} required />
+              </div>
+              <div className="form-group">
+                <label>Project Description *</label>
+                <textarea value={editingProject.projectDescription} onChange={e => setEditingProject({ ...editingProject, projectDescription: e.target.value })} rows="4" required />
+              </div>
+              <div className="form-group">
+                <label>Students</label>
+                <input value={editingProject.studentsInput ?? ''} onChange={e => setEditingProject({ ...editingProject, studentsInput: e.target.value })} placeholder="Name (SRN), Name (SRN)" />
+              </div>
+              <div className="form-group">
+                <label>Report Link</label>
+                <input value={editingProject.report ?? ''} onChange={e => setEditingProject({ ...editingProject, report: e.target.value })} placeholder="https://..." />
+              </div>
+              <div className="form-group">
+                <label>Poster Link</label>
+                <input value={editingProject.poster ?? ''} onChange={e => setEditingProject({ ...editingProject, poster: e.target.value })} placeholder="https://..." />
+              </div>
+              <div className="form-group">
+                <label>Category</label>
+                <select value={editingProject.category ?? ''} onChange={e => setEditingProject({ ...editingProject, category: e.target.value })}>
+                  <option value="">-- None --</option>
+                  <option value="Capstone">Capstone</option>
+                  <option value="Summer Internship">Summer Internship</option>
+                </select>
+              </div>
+              <div className="form-actions">
+                <button type="button" className="cancel-btn" onClick={closeEditModal}>Cancel</button>
+                <button type="submit" className="submit-btn">Save</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
       {/* Award add moved to Admin page */}
     </div>
   );
